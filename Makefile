@@ -1,6 +1,6 @@
 
 C_FLAGS=-Wall
-CC=gcc
+CC=gcc -pthread
 SRC=main.c
 OBJ=$(SRC:.c=.o)
 
