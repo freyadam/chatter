@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <termios.h>
 
 int get_connected_socket(char * server_address, int server_port){
 
@@ -50,14 +51,16 @@ int get_connected_socket(char * server_address, int server_port){
 int main(int argc, char *argv[])
 {
   
+  /*
   char * server_address = "127.0.0.1";
   int server_port = 4444;
-
-  /*
-  int server_port, username_len;
+  */
+  
+  int server_port, username_len, password_len;
   size_t buffer_size;
   char *server_address, *username, *password;
-  
+  struct termios old_flags, new_flags;
+
   if( argc != 3)
     errx(1, "Usage: %s <server_address> <port_number>\n", 
          argv[0]);
@@ -74,15 +77,28 @@ int main(int argc, char *argv[])
     err(1, "getline");
   username[username_len-1] = 0;
   
-  if( (password = getpass("Enter your password ")) == NULL )
-    err(1,"getpass");
+  tcgetattr(0, &old_flags);
+  new_flags = old_flags;
+  new_flags.c_lflag &= ~ECHO;
+  new_flags.c_lflag |= ECHONL;
+  
+  tcsetattr(0, TCSANOW, &new_flags);
+  
+  buffer_size = 0;
+  printf("Enter your password: ");
+  if( ( password_len = getline(&password, &buffer_size, stdin) == -1))
+    err(1, "getline");
+
+  tcsetattr(0, TCSANOW, &old_flags);  
+  
 
   printf("Address: %s\n", server_address);
   printf("Port: %d\n", server_port);
   printf("Username: %s\n", username);  
   printf("Password: %s\n", password);  
-  */
+  
 
+  /*
   int fd = get_connected_socket(server_address, server_port);
 
   char * line = malloc( 30 * sizeof(char) );
@@ -94,6 +110,7 @@ int main(int argc, char *argv[])
   line[k] = 0;
 
   printf("Read: %s", line);
+  */
 
   return EXIT_SUCCESS;
 }
