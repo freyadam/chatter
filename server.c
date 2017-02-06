@@ -1,4 +1,3 @@
-
 #include "system_headers.h"
 #include "proto.h"
 #include "accept.h"
@@ -36,6 +35,16 @@ void run_server(int server_port){
   run_signal_thread();
 }
 
+void print_server_settings(int server_port, char * command_list, char * user_list){
+  
+  printf("PORT: %d\n", server_port);
+  if( command_list != NULL )
+    printf("CMD: %s\n", command_list);
+  if( user_list != NULL )
+    printf("USER: %s\n", user_list);
+
+}
+
 int main(int argc, char *argv[])
 {
   
@@ -43,8 +52,8 @@ int main(int argc, char *argv[])
   /*
   int opt, server_port;
   char * command_list, * user_list, * port_arg;    
-  command_list = NULL;
-  user_list = NULL;
+  command_list = "./commands"; // default
+  user_list = "./users"; // default
 
   // ----- GET OPTIONS -----
   while((opt = getopt(argc, argv, "c:u:")) != -1)
@@ -79,11 +88,7 @@ int main(int argc, char *argv[])
     errx(1, "Port number has to be bigger than 1024.");
 
   // ----- PRINT SETTINGS -----
-  printf("PORT: %d\n", server_port);
-  if( command_list != NULL )
-    printf("CMD: %s\n", command_list);
-  if( user_list != NULL )
-    printf("USER: %s\n", user_list);
+  print_server_settings(server_port, command_list, user_list);
 
   */
 
