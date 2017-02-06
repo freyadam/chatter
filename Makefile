@@ -1,20 +1,20 @@
 
 C_FLAGS=-Wall
-CC=gcc -pthread
-SRC=main.c
+LD_FLAGS=-pthread
+CC=gcc
 OBJ=$(SRC:.c=.o)
 
 .PHONY : all
-all: client server
+all: bin/client bin/server
 
-client: client.o
-	$(CC) $(C_FLAGS) -o $@ $^
+bin/client: client.o 
+	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
 
 client.o : client.c
 	$(CC) $(C_FLAGS) -c -o $@ $^
 
-server: server.o
-	$(CC) $(C_FLAGS) -o $@ $^
+bin/server: server.o
+	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
 
 server.o : server.c
 	$(CC) $(C_FLAGS) -c -o $@ $^

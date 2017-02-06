@@ -9,6 +9,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <termios.h>
+#include <signal.h>
+
+#include "proto.h"
 
 int get_connected_socket(char * server_address, int server_port){
 
@@ -51,11 +54,11 @@ int get_connected_socket(char * server_address, int server_port){
 int main(int argc, char *argv[])
 {
   
-  /*
+  
   char * server_address = "127.0.0.1";
   int server_port = 4444;
-  */
   
+  /*
   int server_port, username_len, password_len;
   size_t buffer_size;
   char *server_address, *username, *password;
@@ -96,20 +99,17 @@ int main(int argc, char *argv[])
   printf("Port: %d\n", server_port);
   printf("Username: %s\n", username);  
   printf("Password: %s\n", password);  
-  
+  */
 
-  /*
+  
   int fd = get_connected_socket(server_address, server_port);
 
-  char * line = malloc( 30 * sizeof(char) );
+  /*
+  char * msg = malloc(4);
+  read(fd, msg, 3);
+  msg[3] = 0;
 
-  ssize_t k = read(fd, line, 10);
-
-  printf("Size: %d\n", k);
-
-  line[k] = 0;
-
-  printf("Read: %s", line);
+  printf("Msg: %s", msg);  
   */
 
   return EXIT_SUCCESS;
