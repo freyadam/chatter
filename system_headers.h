@@ -17,6 +17,9 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <pthread.h>
+#include <fcntl.h>
+
+#define DELIMITER ' '
 
 struct thread_data {
   pthread_t id;

@@ -1,6 +1,7 @@
 
 #include "system_headers.h"
 #include "comm.h"
+#include "proto.h"
 
 #define ORIGINAL_FDS_SIZE 10
 
@@ -14,10 +15,11 @@ void * run_comm_thread(void * arg_struct){
 
   free(args);
   
-  int fds_size = ORIGINAL_FDS_SIZE;
-  int fds_current = 2; // priority channel + thread communication channel
-  struct pollfd * fds = malloc( sizeof(struct pollfd) * fds_size);
-  
+  int err_dispatch;
+  int fds_limit = ORIGINAL_FDS_SIZE;
+  int fds_size = 3; // priority channel + thread communication channel
+  struct pollfd * fds = malloc( sizeof(struct pollfd) * fds_size); 
+      
   // initialize pollfd for priority channel
   fds[0].fd = priority_fd;
   fds[0].events = POLLIN;
@@ -27,28 +29,69 @@ void * run_comm_thread(void * arg_struct){
   fds[1].fd = comm_fd;
   fds[1].events = POLLIN;
   fds[1].revents = 0;
-  
 
-  char * message = malloc( 10 * sizeof(char));
+  // initialize pollfd for thread communication channel
+  fds[2].fd = client_fd;
+  fds[2].events = POLLIN;
+  fds[2].revents = 0;
+
+  printf("Polling...\n");
+  
+  char * message, * prefix;
+  message = NULL;
+  prefix = NULL;
+  char * priority_message = malloc( 10 * sizeof(char));
   int err_poll;
+
+  message = malloc( 300 );
+
   while( true ){
-    if( (err_poll = poll( fds, fds_size, -1)) < 0)
+
+    if( (err_poll = poll( fds,fds_size, -1)) < 0)
       errx(1,"poll");
     
     // priority channel
-    if( fds[1].revents & POLLIN ){
-      int k = read(fds[1].fd, message, 4);
-      message[k] = 0;
-      printf("Priority message received: %s\n", message);      
-      if( strcmp(message,"END") == 0)
+    if( fds[0].revents & POLLIN ){
+      int k = read(fds[0].fd, priority_message, 4);
+      priority_message[k] = 0;
+      printf("Priority message received: %s\n", priority_message);      
+      if( strcmp(priority_message,"END") == 0)
         pthread_exit(NULL);
     }      
+
+    /*
+    if( fds[1].revents & POLLIN){
+
+      // add new client
+
+    }
+    */
+
     
-    printf("Single cycle finished\n");
+    // client test
+    if( fds[2].revents & POLLIN ){
+
+      
+      err_dispatch = get_dispatch(fds[2].fd, &prefix, &message);
+      if( err_dispatch == -1) // something went wrong
+        errx(1, "get_dispatch");
+      else if( err_dispatch == EOF_IN_STREAM) // EOF
+        fds[2].events = 0;
+      else{ // everything worked well
+      
+      if( message == NULL)
+        printf("Type: %s\n", prefix);
+      else
+        printf("Type: %s Message: %s\n", prefix, message);
+      
+      }
+
+    }
+    
   }
   
-
   pthread_exit(NULL);
+
 }
 
 

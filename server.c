@@ -24,15 +24,10 @@ void run_server(int server_port){
 
   block_signals();  
 
-  int fd = get_listening_socket(server_port);
-  int new_client = accept(fd, NULL, 0);
+  pthread_t accept_thread = create_accept_thread(server_port);
 
-  // create communication thread
-  create_comm_thread(new_client, "Prototype");
+  run_signal_thread(accept_thread);
 
-  printf("Thread created\n");
-
-  run_signal_thread();
 }
 
 void print_server_settings(int server_port, char * command_list, char * user_list){
@@ -97,6 +92,8 @@ int main(int argc, char *argv[])
   int server_port = 4444;
 
   run_server(server_port);
-
+  
   return EXIT_SUCCESS;
 }
+
+

@@ -4,6 +4,12 @@
 #include "accept.h"
 #include "comm.h"
 
+void accept_signal_handler(int sig){
+
+  pthread_exit(NULL);
+
+}
+
 // return file descriptor on which the server is already listening (on port server_port)
 int get_listening_socket(int server_port){
 
@@ -53,21 +59,31 @@ int get_listening_socket(int server_port){
 }
 
 
-void run_accept_thread(int server_port){
+void * run_accept_thread(void * arg){
 
-  int fd, new_client;
+  int fd, new_client, server_port;
+  server_port = (int)arg;
 
-  //change signal mask to let SIGINT through
-
+  //change signal mask to let SIGUSR1 through
   // set signal mask
   sigset_t signal_set;
   sigemptyset(&signal_set);
-  sigaddset(&signal_set, SIGINT);
+  sigaddset(&signal_set, SIGUSR1);
   if( pthread_sigmask(SIG_UNBLOCK, &signal_set ,NULL) != 0)
     err(1, "pthread_sigmask");
 
-  while (true){
-    fd = get_listening_socket(server_port);
+  //set sigaction
+  struct sigaction act;
+  act.sa_handler = &accept_signal_handler;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = NULL;
+  if( sigaction(SIGUSR1, &act, NULL) == -1)
+    err(1, "sigaction");
+
+  fd = get_listening_socket(server_port);
+
+  while(true){
+
     new_client = accept(fd, NULL, 0);
     
     // create communication thread
@@ -77,10 +93,18 @@ void run_accept_thread(int server_port){
 
   }
 
-}
-
-void * create_accept_thread(){
-  printf("create_accept_thread is not yet implemented.\n");
-
   return NULL;
 }
+
+pthread_t  create_accept_thread(int server_port){
+
+  pthread_t accept_thread;
+
+  assert( sizeof(void *) >= sizeof(int) );
+
+  pthread_create( &accept_thread, NULL, &run_accept_thread, (void *)server_port);
+
+  return accept_thread;
+}
+
+
