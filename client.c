@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
   
   int fd = get_connected_socket(server_address, server_port);
   
-  write(fd, "ERR ", 4);
-  write(fd, "EXT ", 4);
-  write(fd, "END ", 4);
-  write(fd, "CMD task ", 9);
-  write(fd, "MSG 1 X ", 8 );
+  send_error(fd);
+  send_exit(fd);
+  send_end(fd);
+  send_message(fd, "Hello World!");
+  send_command(fd, "Order66");
 
   /*
   char * msg = malloc(4);

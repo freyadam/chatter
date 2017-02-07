@@ -72,7 +72,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
   // get prefix
   prefix_len = get_delim(fd, &prefix, DELIMITER);
 
-  printf("prefix_len: %d, prefix: '%s'\n", (int)prefix_len, prefix);
+  //printf("prefix_len: %d, prefix: '%s'\n", (int)prefix_len, prefix);
 
   if( prefix_len == 0)
     return EOF_IN_STREAM;
@@ -108,8 +108,6 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
 
   } else if( strcmp(prefix, "MSG") == 0){ // MESSAGE
 
-    printf("Msg\n");
-
     // get length of message
     int err_arg = get_delim(fd, message_ptr, DELIMITER);
     if ( err_arg == -1){
@@ -120,8 +118,6 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
     
     int msg_length = atoi(*message_ptr);
 
-    printf("Len: %d\n", msg_length);
-
     free(*message_ptr);
     *message_ptr = malloc( sizeof(char) * msg_length );
     if( message_ptr == NULL )
@@ -130,16 +126,13 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
     // get the actual message
     err_arg = read(fd, *message_ptr, msg_length+1);
     if ( err_arg != msg_length+1) {
-      printf("A __ %d\n", err_arg);
       return -1;
     }
     else if ( (*message_ptr)[err_arg-1] != DELIMITER){
-      printf("B __ %d __ %c\n", err_arg, (*message_ptr)[err_arg-1]);
       return -1;
     }
 
     (*message_ptr)[msg_length] = '\0';
-    printf("Content: %s\n", *message_ptr);
 
     *prefix_ptr = prefix;
     // message_ptr already set previously
@@ -148,6 +141,88 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
 
     return -1;
 
+  }
+
+  return EXIT_SUCCESS;
+}
+
+int send_dispatch(int fd, char * dispatch){
+
+  int result = write(fd, dispatch, strlen(dispatch));
+  
+  if( result != strlen(dispatch) )
+    return EXIT_FAILURE;
+
+  return EXIT_SUCCESS;
+}
+
+int send_message(int fd, char * message){
+  
+  char * dispatch = malloc( sizeof(char) * (3 + 1 + MAX_MSG_LEN_SIZE + 1 + strlen(message) + 1 + 1));
+
+  int result = sprintf(dispatch, "MSG %d %s ", (int)strlen(message), message);
+  if( result < 0)
+    return EXIT_FAILURE;
+
+  result = send_dispatch(fd, dispatch);
+
+  return result;
+}
+
+int send_command(int fd, char * cmd){
+
+  char * dispatch = malloc( sizeof(char) * (3 + 1 + strlen(cmd) + 1 + 1));
+  
+  int result = sprintf(dispatch, "CMD %s ", cmd);
+  if( result < 0)
+    return EXIT_FAILURE;
+
+  result = send_dispatch(fd, dispatch);
+
+  return result;
+}
+
+int send_error(int fd){
+
+  return send_dispatch(fd, "ERR ");
+
+}
+
+int send_exit(int fd){
+
+  return send_dispatch(fd, "EXT ");
+
+}
+
+int send_end(int fd){
+
+  return send_dispatch(fd, "END ");
+
+}
+
+int send_end_to_all(struct pollfd * fds, int fds_size){
+  
+  int i, result;
+  for( i = 0; i < fds_size; i++ ){
+
+    result = send_end(fds[i].fd);
+    if( result == EXIT_FAILURE )
+      printf("Client %d could not receive 'end of transmission' message.\n", i);
+  }
+
+  return EXIT_SUCCESS;
+}
+
+int send_message_to_all(struct pollfd * fds, int fds_size, int exception, char * message){
+
+  int i, result;
+  for( i = 0; i < fds_size; i++ ){
+
+    if( i != exception ){
+      result = send_message(fds[i].fd, message);
+      if( result == EXIT_FAILURE )
+        printf("Client %d could not receive message.\n", i);
+    }
   }
 
   return EXIT_SUCCESS;
