@@ -3,6 +3,11 @@
 #include "proto.h"
 #include "client_comm.h"
 
+
+char * cmd_argument(char * line){
+  return line+5;
+}
+
 int get_connected_socket(char * server_address, int server_port){
 
   int fd;
@@ -41,43 +46,153 @@ int get_connected_socket(char * server_address, int server_port){
 
 }
 
+void * lines_to_pipe(void * arg){
+
+  int * pipe = (int *) arg;
+  char * line;
+  ssize_t read, wr_read;
+  size_t line_size = 0;
+
+  while(true){
+  
+  line = NULL;
+  line_size = 0;
+
+  read = getline(&line, &line_size, stdin);    
+    
+  if( read == -1)
+    err(1,"getline");
+  if( read == 0){
+    close(*pipe);
+  }
+  
+  wr_read = write(*pipe, line, read);
+  if( wr_read == -1)
+    err(1,"write");
+  if( wr_read != read){
+    close(*pipe);
+    break;
+  }
+
+  free(line);
+ 
+  }
+
+  return NULL;
+}
+
 int run_client(char * server_address, int server_port){
 
-  ssize_t line_len;
-  size_t allocated_len;
-  char * line;
-  int fd = get_connected_socket(server_address, server_port);  
+  pthread_t get_line_thread;
+  int line_pipe[2], result;
+
+  int server_fd = get_connected_socket(server_address, server_port);  
+
+  if( pipe(line_pipe) == -1)
+    err(1, "pipe");
+
+  if( pthread_create(&get_line_thread, NULL, &lines_to_pipe, &(line_pipe[1])) > 0)
+    errx(1, "pthread_create");
 
   printf("We're connected!\n");
-  // get info from server
+
+  struct pollfd * fds = malloc( sizeof(struct pollfd) * 2); 
+
+  // initialize pollfd for server
+  fds[0].fd = server_fd;
+  fds[0].events = POLLIN;
+  fds[0].revents = 0;
+
+  // initialize pollfd for user-input
+  fds[1].fd = line_pipe[0];
+  fds[1].events = POLLIN;
+  fds[1].revents = 0;
+
+  // print server info
 
   while( true ){
 
-    allocated_len = 0; line = NULL;
+    if( poll(fds, 2, -1) == -1 )
+      err(1,"poll");    
 
-    if( (line_len = getline(&line, &allocated_len, stdin)) == -1){
-      printf("Failed to read line. Exiting...\n");
-      return EXIT_FAILURE;
+    // input from server
+    if( fds[0].revents & POLLIN ){
+
+      result = process_server_request(fds[0].fd);
+
+      if( result == EOF_IN_STREAM ){
+        printf("End of transmission\n");            
+        break;
+      } else if( result == EXIT_FAILURE )
+        errx(1, "process_server_request");
+
     }
 
-    // get rid of \n on the end of the line
-    line[line_len-1] = '\0';
+    // input from client
+    if( fds[1].revents & POLLIN ){
 
-    if( process_client_request(fd, &line) == EXIT_FAILURE )
-      return EXIT_FAILURE;
+      result = process_client_request(fds[0].fd, fds[1].fd);
+
+      if( result == EXIT_FAILURE )
+        errx(1, "process_client_request");
+
+    }
 
   }  
 
   return EXIT_SUCCESS;
 }
 
-char * cmd_argument(char * line){
-  return line+5;
+int process_server_request(int fd){
+
+  char * prefix, * message;
+  prefix = NULL; message = NULL;
+
+  int err_dispatch = get_dispatch(fd, &prefix, &message);
+  
+  if(err_dispatch == EXIT_FAILURE)
+    return EXIT_FAILURE;
+  else if( err_dispatch == EOF_IN_STREAM)
+    return EOF_IN_STREAM;
+  
+  if( strcmp(prefix, "ERR" ) == 0){
+
+    printf("ERR\n"); 
+
+  } else if( strcmp(prefix, "EXT" ) == 0){
+
+    printf("EXT\n");
+
+  } else if( strcmp(prefix, "END" ) == 0){
+
+    return EOF_IN_STREAM;
+
+  } else if( strcmp(prefix, "CMD" ) == 0){
+
+    // client doesn't take commands from server
+    return EXIT_FAILURE;
+          
+  } else if( strcmp(prefix, "MSG" ) == 0){
+          
+    // print message
+    printf("Message from server: %s\n", message);
+    
+  }
+
+  if( prefix != NULL)
+    free(prefix); 
+  if( message != NULL)
+    free(message);
+
+  return EXIT_SUCCESS;
 }
 
-int process_client_request(int fd, char ** line_ptr){
+int process_client_request(int server_fd, int line_fd){
   
-  char * line = *line_ptr;
+  char * line = NULL;
+  int result = get_delim(line_fd, &line, '\n');
+  if( result == -1 )
+    err(1, "get_delim");  
 
   if( line == strstr(line, "/cmd")){ // CMD
     if( NULL != strstr(cmd_argument(line), " ")){
@@ -85,11 +200,13 @@ int process_client_request(int fd, char ** line_ptr){
         return EXIT_FAILURE;
     }
         
-    return send_command(fd, cmd_argument(line));
+    return send_command(server_fd, cmd_argument(line));
 
   } else {
 
-    return send_message(fd, line); // MSG
+    //printf("%s: %s\n", username, line);
+
+    return send_message(server_fd, line); // MSG
 
   }
 

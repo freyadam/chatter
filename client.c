@@ -1,6 +1,7 @@
 #include "system_headers.h"
 #include "client_comm.h"
 
+
 int main(int argc, char *argv[])
 {
   
@@ -50,6 +51,8 @@ int main(int argc, char *argv[])
   printf("Username: %s\n", username);  
   printf("Password: %s\n", password);  
   */
+  
+  username = "HAL";
   
   return run_client(server_address, server_port);
 

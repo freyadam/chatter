@@ -42,7 +42,7 @@ int get_delim(int fd, char ** line_ptr, char del){
   }
   
   if( err_read == -1 )
-    err(1,"read");
+    return -1;
 
   *line_ptr = line;
 
@@ -76,7 +76,9 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
 
   if( prefix_len == 0)
     return EOF_IN_STREAM;
-  if( prefix_len != 3)
+  else if( prefix_len == -1)
+    return -1;
+  else if( prefix_len != 3)
     return -1;
 
   if( strcmp(prefix, "ERR") == 0){ // ERROR
@@ -137,6 +139,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
     *prefix_ptr = prefix;
     // message_ptr already set previously
 
+
   } else { // UNKNOWN PREFIX
 
     return -1;
@@ -147,12 +150,12 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
 }
 
 int send_dispatch(int fd, char * dispatch){
-
+  
   int result = write(fd, dispatch, strlen(dispatch));
   
-  if( result != strlen(dispatch) )
+  if( result != strlen(dispatch))
     return EXIT_FAILURE;
-
+  
   return EXIT_SUCCESS;
 }
 
@@ -164,7 +167,7 @@ int send_message(int fd, char * message){
   if( result < 0)
     return EXIT_FAILURE;
 
-  result = send_dispatch(fd, dispatch);
+  result = send_dispatch(fd, dispatch);  
 
   free(dispatch);
 

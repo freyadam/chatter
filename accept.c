@@ -54,6 +54,8 @@ int get_listening_socket(int server_port){
   if( listen(fd, SOMAXCONN) == -1)
     err(1, "listen");
 
+  free(server_port_string);
+
   return fd;
 
 }
@@ -62,7 +64,8 @@ int get_listening_socket(int server_port){
 void * run_accept_thread(void * arg){
 
   int fd, new_client, server_port;
-  server_port = (int)arg;
+  server_port = *((int * )arg);
+  free(arg);
 
   //change signal mask to let SIGUSR1 through
   // set signal mask
@@ -76,7 +79,7 @@ void * run_accept_thread(void * arg){
   struct sigaction act;
   act.sa_handler = &accept_signal_handler;
   sigemptyset(&act.sa_mask);
-  act.sa_flags = NULL;
+  act.sa_flags = 0;
   if( sigaction(SIGUSR1, &act, NULL) == -1)
     err(1, "sigaction");
 
@@ -100,9 +103,9 @@ pthread_t  create_accept_thread(int server_port){
 
   pthread_t accept_thread;
 
-  assert( sizeof(void *) >= sizeof(int) );
-
-  pthread_create( &accept_thread, NULL, &run_accept_thread, (void *)server_port);
+  int * port_ptr = malloc( sizeof(int) * 1);
+  *port_ptr = server_port;
+  pthread_create( &accept_thread, NULL, &run_accept_thread, (void *)port_ptr);
 
   return accept_thread;
 }
