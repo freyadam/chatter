@@ -1,5 +1,4 @@
 #include "system_headers.h"
-#include "proto.h"
 #include "client_comm.h"
 
 int main(int argc, char *argv[])
@@ -51,23 +50,6 @@ int main(int argc, char *argv[])
   printf("Username: %s\n", username);  
   printf("Password: %s\n", password);  
   */
-
   
-  int fd = get_connected_socket(server_address, server_port);
-  
-  send_error(fd);
-  send_exit(fd);
-  send_end(fd);
-  send_message(fd, "Hello World!");
-  send_command(fd, "Order66");
-
-  /*
-  char * msg = malloc(4);
-  read(fd, msg, 3);
-  msg[3] = 0;
-
-  printf("Msg: %s", msg);  
-  */
-
-  return EXIT_SUCCESS;
+    return run_client(server_address, server_port);
 }

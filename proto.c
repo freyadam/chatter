@@ -166,6 +166,8 @@ int send_message(int fd, char * message){
 
   result = send_dispatch(fd, dispatch);
 
+  free(dispatch);
+
   return result;
 }
 
@@ -178,6 +180,8 @@ int send_command(int fd, char * cmd){
     return EXIT_FAILURE;
 
   result = send_dispatch(fd, dispatch);
+
+  free(dispatch);
 
   return result;
 }
