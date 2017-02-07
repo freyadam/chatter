@@ -51,5 +51,6 @@ int main(int argc, char *argv[])
   printf("Password: %s\n", password);  
   */
   
-    return run_client(server_address, server_port);
+  return run_client(server_address, server_port);
+
 }

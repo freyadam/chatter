@@ -61,7 +61,6 @@ int run_client(char * server_address, int server_port){
     }
 
     // get rid of \n on the end of the line
-    printf("L: %d ___ %s\n", (int)line_len, line);
     line[line_len-1] = '\0';
 
     if( process_client_request(fd, &line) == EXIT_FAILURE )
@@ -72,9 +71,27 @@ int run_client(char * server_address, int server_port){
   return EXIT_SUCCESS;
 }
 
-int process_client_request(int fd, char ** line){
+char * cmd_argument(char * line){
+  return line+5;
+}
+
+int process_client_request(int fd, char ** line_ptr){
   
-  return send_message(fd, *line);
+  char * line = *line_ptr;
+
+  if( line == strstr(line, "/cmd")){ // CMD
+    if( NULL != strstr(cmd_argument(line), " ")){
+        printf("Commands cannot contain spaces\n");
+        return EXIT_FAILURE;
+    }
+        
+    return send_command(fd, cmd_argument(line));
+
+  } else {
+
+    return send_message(fd, line); // MSG
+
+  }
 
 }
 
