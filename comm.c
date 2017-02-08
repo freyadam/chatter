@@ -182,6 +182,9 @@ void create_comm_thread(char * name){
 
 
   // get pointer to the last element of thread_list
+  if( pthread_mutex_unlock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_lock");
+
   struct thread_data * thr_ptr;
   if( thread_list == NULL ){
     thread_list = thr_data;
@@ -190,6 +193,9 @@ void create_comm_thread(char * name){
     for( thr_ptr = thread_list; thr_ptr->next != NULL; thr_ptr = thr_ptr->next){}
     thr_ptr->next = thr_data;
   }
+
+  if( pthread_mutex_unlock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_unlock");
 
   printf("Appended\n");
 

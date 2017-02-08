@@ -18,18 +18,27 @@ void run_signal_thread(pthread_t accept_thread){
   pthread_kill(accept_thread, SIGUSR1);
 
   // kill everyone else  
+  if( pthread_mutex_lock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_lock");
+
   struct thread_data * thr_ptr;  
   for( thr_ptr = thread_list; thr_ptr != NULL; thr_ptr = thr_ptr->next){
     write( thr_ptr->priority_fd, "END", 3);
   }
+  if( pthread_mutex_lock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_lock");
   
   printf("Exiting...\n");
 
   // join with other threads
+  if( pthread_mutex_lock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_lock");
+
   for( thr_ptr = thread_list; thr_ptr != NULL; thr_ptr = thr_ptr->next){
     pthread_join(thr_ptr->id, NULL); // pthread_join returns error but correctly returns result (???)
   }
-
-  exit(EXIT_SUCCESS);
+  
+  if( pthread_mutex_lock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_lock");  
 
 }

@@ -6,6 +6,7 @@
 #include "signal.h"
 
 struct thread_data * thread_list;
+pthread_mutex_t thr_list_mx;
 
 void block_signals(){
 
@@ -22,6 +23,9 @@ void block_signals(){
 
 void run_server(int server_port){
 
+  if( pthread_mutex_init( &thr_list_mx, NULL) != 0 )
+    errx(1, "pthread_mutex_init");
+
   block_signals();  
 
   pthread_t accept_thread = create_accept_thread(server_port);
@@ -29,8 +33,10 @@ void run_server(int server_port){
   // create communication thread
   create_comm_thread("Prototype");
 
-
   run_signal_thread(accept_thread);
+
+  if( pthread_mutex_destroy( &thr_list_mx ) != 0 )
+    errx(1, "pthread_mutex_destroy");
 
 }
 
