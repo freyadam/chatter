@@ -5,6 +5,14 @@
 
 #define ORIGINAL_FDS_SIZE 10
 
+void init_pollfd_record(struct pollfd ** fds_ptr, int no_of_record, int fd){
+
+  (*fds_ptr)[no_of_record].fd = fd;
+  (*fds_ptr)[no_of_record].events = POLLIN;
+  (*fds_ptr)[no_of_record].revents = no_of_record;
+
+}
+
 void * run_comm_thread(void * arg_struct){
 
   struct new_thread_args * args = (struct new_thread_args *) arg_struct;
@@ -19,14 +27,10 @@ void * run_comm_thread(void * arg_struct){
   struct pollfd * fds = malloc( sizeof(struct pollfd) * fds_size); 
       
   // initialize pollfd for priority channel
-  fds[0].fd = priority_fd;
-  fds[0].events = POLLIN;
-  fds[0].revents = 0;
+  init_pollfd_record( &fds, 0, priority_fd);
 
   // initialize pollfd for thread communication channel
-  fds[1].fd = comm_fd;
-  fds[1].events = POLLIN;
-  fds[1].revents = 0;
+  init_pollfd_record( &fds, 1, comm_fd);
 
   printf("Polling...\n");
   
@@ -191,9 +195,7 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd){
   if(*fds_ptr == NULL)
     err(1,"realloc");
 
-  (*fds_ptr)[*fds_size].fd = fd;
-  (*fds_ptr)[*fds_size].events = POLLIN;
-  (*fds_ptr)[*fds_size].revents = 0;
+  init_pollfd_record( fds_ptr, *fds_size, fd);
   
   (*fds_size)++;
 
@@ -201,6 +203,8 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd){
 }
 
 int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
+
+  close(  (*fds)[client_no].fd  );
 
   int i;
   for( i = client_no+1; i < *fds_size; i++){
