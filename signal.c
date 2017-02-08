@@ -1,5 +1,6 @@
 
 #include "system_headers.h"
+#include "proto.h"
 #include "signal.h"
 
 void run_signal_thread(pthread_t accept_thread){
@@ -23,10 +24,10 @@ void run_signal_thread(pthread_t accept_thread){
 
   struct thread_data * thr_ptr;  
   for( thr_ptr = thread_list; thr_ptr != NULL; thr_ptr = thr_ptr->next){
-    write( thr_ptr->priority_fd, "END", 3);
+    send_end(thr_ptr->priority_fd);
   }
-  if( pthread_mutex_lock(&thr_list_mx) != 0)
-    errx(1, "pthread_mutex_lock");
+  if( pthread_mutex_unlock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_unlock");
   
   printf("Exiting...\n");
 
@@ -38,7 +39,7 @@ void run_signal_thread(pthread_t accept_thread){
     pthread_join(thr_ptr->id, NULL); // pthread_join returns error but correctly returns result (???)
   }
   
-  if( pthread_mutex_lock(&thr_list_mx) != 0)
-    errx(1, "pthread_mutex_lock");  
+  if( pthread_mutex_unlock(&thr_list_mx) != 0)
+    errx(1, "pthread_mutex_unlock");  
 
 }

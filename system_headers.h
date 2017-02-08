@@ -1,7 +1,6 @@
 #ifndef SYSTEM_HEADERS_H_
 #define SYSTEM_HEADERS_H_
 
-
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
@@ -36,6 +35,7 @@ struct new_thread_args {
   int client_fd;
 };
 
-
+struct thread_data * thread_list;
+pthread_mutex_t thr_list_mx;
 
 #endif // SYSTEM_HEADERS_H_

@@ -64,7 +64,8 @@ int get_listening_socket(int server_port){
 
 void * run_accept_thread(void * arg){
 
-  int fd, new_client, server_port;
+  int fd, client_fd, server_port;
+  char * client_fd_str;
   server_port = *((int * )arg);
   free(arg);
 
@@ -88,7 +89,15 @@ void * run_accept_thread(void * arg){
 
   while(true){
 
-    new_client = accept(fd, NULL, 0);    
+    client_fd = accept(fd, NULL, 0);    
+    
+    // send username and file descriptor of newly accepted client to the appropriate thread
+    send_message((*thread_list).comm_fd, "Placeholder name");
+
+    client_fd_str = malloc( sizeof(char) * 6);
+    sprintf(client_fd_str, "%d", client_fd); 
+    send_message((*thread_list).comm_fd, client_fd_str);
+    free(client_fd_str);
     
   }
 
