@@ -123,8 +123,6 @@ void process_comm_request(struct pollfd ** fds, int * fds_size){
   // add the new client
   add_client(fds, fds_size, new_fd);
 
-  printf("New fds_size: %d, fd[2]: %d\n", *fds_size, (*fds)[2].fd);
-
   free(new_username);
 
   // release allocated resources
@@ -137,14 +135,14 @@ void process_comm_request(struct pollfd ** fds, int * fds_size){
 
 void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
 
-  int err_dispatch;
-  char * prefix, * message;
+  int err_no, i;
+  char * prefix, * message, * resend_msg;
   prefix = NULL; message = NULL;
       
-  err_dispatch = get_dispatch((*fds)[client_no].fd, &prefix, &message);
-  if( err_dispatch == -1) // something went wrong
+  err_no = get_dispatch((*fds)[client_no].fd, &prefix, &message);
+  if( err_no == -1) // something went wrong
     errx(1, "get_dispatch");
-  else if( err_dispatch == EOF_IN_STREAM) // EOF
+  else if( err_no == EOF_IN_STREAM) // EOF
 
     // end (*fds)[client_no];
     (*fds)[client_no].events = 0;
@@ -155,12 +153,12 @@ void process_client_request(struct pollfd ** fds, int * fds_size, int client_no)
 
     if( strcmp(prefix, "ERR" ) == 0){
           
-      send_message((*fds)[client_no].fd, "ERR");
+      send_message((*fds)[client_no].fd, "Error message received.");
 
     } else if( strcmp(prefix, "EXT" ) == 0){
 
       // back to menu
-      send_message((*fds)[client_no].fd, "EXT");
+      send_message((*fds)[client_no].fd, "EXT: This function is currently disabled.");
 
     } else if( strcmp(prefix, "END" ) == 0){
 
@@ -171,12 +169,23 @@ void process_client_request(struct pollfd ** fds, int * fds_size, int client_no)
     } else if( strcmp(prefix, "CMD" ) == 0){
 
       // perform cmd
-      send_message((*fds)[client_no].fd, "CMD");          
+      send_message((*fds)[client_no].fd, "CMD: This function is currently disabled.");          
           
     } else if( strcmp(prefix, "MSG" ) == 0){
           
-      // send message to others
-      send_message((*fds)[client_no].fd, "MSG");          
+      send_message((*fds)[client_no].fd, "MSG received");          
+      
+      // send message to all the other clients
+      resend_msg = malloc( sizeof(char) * ( 1 + 4 + 2 + strlen(message) + 1 ));
+      if( resend_msg == NULL)
+        err(1,"malloc");
+      err_no = sprintf( resend_msg, "<%d> %s", client_no, message);
+      for (i = 2; i < *fds_size; i++) {
+        if( i != client_no )
+          send_message((*fds)[i].fd, resend_msg);      
+      }
+
+
     }
        
     // release allocated resources
