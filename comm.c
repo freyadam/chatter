@@ -155,8 +155,9 @@ int delete_client(struct pollfd * fds, int fds_size, int client_no){
   return EXIT_SUCCESS;
 }
 
-void create_comm_thread(int client_fd, char * name){
+void create_comm_thread(char * name){
 
+  int client_fd = 0;
   int comm_pipe[2], priority_pipe[2];
   struct thread_data * thr_data = malloc( sizeof(struct thread_data) );
   bzero(thr_data, sizeof(struct thread_data));

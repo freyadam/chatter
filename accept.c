@@ -3,6 +3,7 @@
 #include "system_headers.h"
 #include "accept.h"
 #include "comm.h"
+#include "proto.h"
 
 void accept_signal_handler(int sig){
 
@@ -87,13 +88,8 @@ void * run_accept_thread(void * arg){
 
   while(true){
 
-    new_client = accept(fd, NULL, 0);
+    new_client = accept(fd, NULL, 0);    
     
-    // create communication thread
-    create_comm_thread(new_client, "Prototype");
-
-    printf("Thread created\n");
-
   }
 
   return NULL;

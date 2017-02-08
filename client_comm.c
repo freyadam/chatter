@@ -55,36 +55,54 @@ void * lines_to_pipe(void * arg){
 
   while(true){
   
-  line = NULL;
-  line_size = 0;
+    line = NULL;
+    line_size = 0;
 
-  read = getline(&line, &line_size, stdin);    
+    read = getline(&line, &line_size, stdin);    
     
-  if( read == -1)
-    err(1,"getline");
-  if( read == 0){
-    close(*pipe);
-  }
+    if( read == -1)
+      err(1,"getline");
+    if( read == 0){
+      close(*pipe);
+    }
   
-  wr_read = write(*pipe, line, read);
-  if( wr_read == -1)
-    err(1,"write");
-  if( wr_read != read){
-    close(*pipe);
-    break;
-  }
+    wr_read = write(*pipe, line, read);
+    if( wr_read == -1)
+      err(1,"write");
+    if( wr_read != read){
+      close(*pipe);
+      break;
+    }
 
-  free(line);
+    free(line);
  
   }
 
   return NULL;
 }
 
+void client_sigint_handler(int sig){
+
+  assert( sig == SIGINT );
+  
+}
+
+void set_sigint_handler(){
+
+  struct sigaction act;
+  act.sa_handler = &client_sigint_handler;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+
+  if( sigaction(SIGINT, &act ,NULL) == -1 )
+    err(1,"sigaction");
+
+}
+
 int run_client(char * server_address, int server_port){
 
   pthread_t get_line_thread;
-  int line_pipe[2], result;
+  int line_pipe[2], result, err_poll;
 
   int server_fd = get_connected_socket(server_address, server_port);  
 
@@ -93,6 +111,8 @@ int run_client(char * server_address, int server_port){
 
   if( pthread_create(&get_line_thread, NULL, &lines_to_pipe, &(line_pipe[1])) > 0)
     errx(1, "pthread_create");
+
+  set_sigint_handler();
 
   printf("We're connected!\n");
 
@@ -112,8 +132,17 @@ int run_client(char * server_address, int server_port){
 
   while( true ){
 
-    if( poll(fds, 2, -1) == -1 )
-      err(1,"poll");    
+    err_poll = poll(fds, 2, -1);
+    if( err_poll == -1 && errno == EINTR ){
+      send_end(fds[0].fd);
+      printf("Exiting...\n");
+
+      exit(0);
+    } else if ( err_poll == -1)
+      err(1, "poll");
+
+    
+
 
     // input from server
     if( fds[0].revents & POLLIN ){
@@ -196,8 +225,8 @@ int process_client_request(int server_fd, int line_fd){
 
   if( line == strstr(line, "/cmd")){ // CMD
     if( NULL != strstr(cmd_argument(line), " ")){
-        printf("Commands cannot contain spaces\n");
-        return EXIT_FAILURE;
+      printf("Commands cannot contain spaces\n");
+      return EXIT_FAILURE;
     }
         
     return send_command(server_fd, cmd_argument(line));
