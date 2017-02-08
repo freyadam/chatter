@@ -30,6 +30,9 @@ void run_server(int server_port){
 
   pthread_t accept_thread = create_accept_thread(server_port);
 
+  //create menu thread
+  create_menu_thread();
+
   // create communication thread
   create_comm_thread("Prototype");
 

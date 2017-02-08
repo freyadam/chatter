@@ -29,8 +29,6 @@ void * run_comm_thread(void * arg_struct){
 
   // initialize pollfd for thread communication channel
   init_pollfd_record( &fds, 1, comm_fd);
-
-  printf("Polling...\n");
   
   int err_poll, client_no;
 
@@ -42,7 +40,7 @@ void * run_comm_thread(void * arg_struct){
     // priority channel
     if( fds[0].revents & POLLIN ){
 
-      process_priority_request( fds, fds_size );
+      process_priority_request( fds, fds_size, room_name );
 
     }      
 
@@ -71,7 +69,7 @@ void * run_comm_thread(void * arg_struct){
 
 }
 
-void process_priority_request(struct pollfd * fds, int fds_size){
+void process_priority_request(struct pollfd * fds, int fds_size, char * room_name){
 
   char * prefix, * message;
   int client_no;
@@ -79,9 +77,9 @@ void process_priority_request(struct pollfd * fds, int fds_size){
   get_dispatch(fds[0].fd, &prefix, &message);
 
   if( message != NULL )
-    printf("Priority message received: %s _ %s\n", prefix, message);      
+    printf("Priority message received in %s: %s _ %s\n", room_name, prefix, message);      
   else 
-    printf("Priority message received: %s\n", prefix);      
+    printf("Priority message received in %s: %s\n", room_name, prefix);      
 
   if( strcmp(prefix,"END") == 0){
     for( client_no = 2; client_no < fds_size; client_no++){ // send end to all clients
@@ -219,12 +217,13 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd, char * room_nam
     }
 
   }
+
+
   send_message((*fds_ptr)[*fds_size].fd, "Commands:");
   send_message((*fds_ptr)[*fds_size].fd, "/cmd task ... Perform task on server.");
   send_message((*fds_ptr)[*fds_size].fd, "/ext ... Exit to menu.");
   send_message((*fds_ptr)[*fds_size].fd, "/end ... End connection.");
 
-  
 
   // send message to others as well
   for(i = 2; i < *fds_size; i++){
@@ -241,19 +240,30 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd, char * room_nam
 
 int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
 
-  close(  (*fds)[client_no].fd  );
-
   int i;
+  char * client_name = malloc(50);
+  
+  close(  (*fds)[client_no].fd  );
+  
+  for( i = 2; i < *fds_size; i++){
+    if( i != client_no ){
+      sprintf(client_name, "User %d left the room.", client_no);
+      send_message( (*fds)[i].fd, client_name);
+    }
+  }
+
   for( i = client_no+1; i < *fds_size; i++){
     (*fds)[i-1] = (*fds)[i];
   }
-  
+    
 
   (*fds_size)--;
 
   *fds = realloc(*fds, sizeof(struct pollfd) * (*fds_size));
   if( *fds == NULL)
     err(1, "realloc");
+
+  free(client_name);
 
   return EXIT_SUCCESS; 
 }
