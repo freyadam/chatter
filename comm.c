@@ -35,9 +35,6 @@ void * run_comm_thread(void * arg_struct){
 
   while( true ){
 
-    printf("Poll\n");
-
-
     if( (err_poll = poll( fds,fds_size, -1)) < 0)
       errx(1,"poll");
     

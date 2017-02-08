@@ -114,7 +114,7 @@ int run_client(char * server_address, int server_port){
 
   set_sigint_handler();
 
-  printf("We're connected!\n");
+  printf("You're connected!\n");
 
   struct pollfd * fds = malloc( sizeof(struct pollfd) * 2); 
 
@@ -140,10 +140,7 @@ int run_client(char * server_address, int server_port){
       exit(0);
     } else if ( err_poll == -1)
       err(1, "poll");
-
     
-
-
     // input from server
     if( fds[0].revents & POLLIN ){
 
@@ -230,10 +227,13 @@ int process_client_request(int server_fd, int line_fd){
     }
         
     return send_command(server_fd, cmd_argument(line));
+    
+  } else if( strcmp(line, "/end") == 0){
+
+    return send_end(server_fd);
+    exit(0);
 
   } else {
-
-    //printf("%s: %s\n", username, line);
 
     return send_message(server_fd, line); // MSG
 
