@@ -32,6 +32,7 @@ struct thread_data {
 struct new_thread_args {
   int comm_fd;
   int priority_fd;
+  char * room_name;
 };
 
 struct thread_data * thread_list;

@@ -17,6 +17,7 @@ void * run_comm_thread(void * arg_struct){
   
   int comm_fd = args->comm_fd;
   int priority_fd = args->priority_fd; 
+  char * room_name = args->room_name;
 
   free(args);
   
@@ -48,7 +49,7 @@ void * run_comm_thread(void * arg_struct){
     // communication between threads
     if( fds[1].revents & POLLIN){
 
-      process_comm_request(&fds, &fds_size);
+      process_comm_request(&fds, &fds_size, room_name);
 
     }    
     
@@ -56,9 +57,7 @@ void * run_comm_thread(void * arg_struct){
     for( client_no = 2; client_no < fds_size; client_no++){      
 
       if( fds[client_no].revents & POLLIN ){
-      
-        printf("Entered block %d\n", client_no);
-        
+              
         process_client_request(&fds, &fds_size, client_no);
 
       }
@@ -94,7 +93,7 @@ void process_priority_request(struct pollfd * fds, int fds_size){
 
 }
 
-void process_comm_request(struct pollfd ** fds, int * fds_size){
+void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name){
 
   int new_fd;
   char * prefix, * message, * new_username;
@@ -121,7 +120,7 @@ void process_comm_request(struct pollfd ** fds, int * fds_size){
   printf("New client: %s -- %d\n", new_username, new_fd);
 
   // add the new client
-  add_client(fds, fds_size, new_fd);
+  add_client(fds, fds_size, new_fd, room_name);
 
   free(new_username);
 
@@ -172,9 +171,7 @@ void process_client_request(struct pollfd ** fds, int * fds_size, int client_no)
       send_message((*fds)[client_no].fd, "CMD: This function is currently disabled.");          
           
     } else if( strcmp(prefix, "MSG" ) == 0){
-          
-      //send_message((*fds)[client_no].fd, "MSG received");          
-      
+                
       // send message to all the other clients
       resend_msg = malloc( sizeof(char) * ( 1 + 4 + 2 + strlen(message) + 1 ));
       if( resend_msg == NULL)
@@ -198,9 +195,9 @@ void process_client_request(struct pollfd ** fds, int * fds_size, int client_no)
 
 }
 
-int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd){
+int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd, char * room_name){
 
-  char * usr_name = malloc(30);
+  char * name = malloc(100);
   int i;
 
   *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
@@ -210,24 +207,25 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd){
   init_pollfd_record( fds_ptr, *fds_size, fd);
   
   // send chatroom info to new user
-  send_message((*fds_ptr)[*fds_size].fd, "----- Connected to room -----");
+  sprintf( name, "----- Connected to room %s -----", room_name);
+  send_message((*fds_ptr)[*fds_size].fd, name);
   if( *fds_size > 2 ){
 
     send_message((*fds_ptr)[*fds_size].fd, "Current users:");
     for(i = 2; i < *fds_size; i++){
-      sprintf(usr_name, "%d", i);
-      send_message((*fds_ptr)[*fds_size].fd, usr_name);
+      sprintf(name, "%d", i);
+      send_message((*fds_ptr)[*fds_size].fd, name);
     }
 
   }
 
   // send message to others as well
   for(i = 2; i < *fds_size; i++){
-    sprintf(usr_name, "New user connected: %d", (*fds_ptr)[*fds_size].fd);
-    send_message((*fds_ptr)[i].fd, usr_name);
+    sprintf(name, "New user connected: %d", (*fds_ptr)[*fds_size].fd);
+    send_message((*fds_ptr)[i].fd, name);
   }
 
-  free(usr_name);
+  free(name);
 
   (*fds_size)++;
 
@@ -300,6 +298,7 @@ void create_comm_thread(char * name){
   struct new_thread_args * args = malloc( sizeof(struct new_thread_args) );
   args->comm_fd = comm_pipe[0];
   args->priority_fd = priority_pipe[0]; 
+  args->room_name = "Room Name Placeholder";
 
   if( pthread_create(&(thr_ptr->id), NULL, &run_comm_thread, (void *) args) != 0)
     errx(1, "pthread_create");
