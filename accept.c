@@ -91,6 +91,8 @@ void * run_accept_thread(void * arg){
 
     client_fd = accept(fd, NULL, 0);    
     
+    // authentication
+
     // send username and file descriptor of newly accepted client to the appropriate thread
     send_message((*thread_list).comm_fd, "Placeholder");
 

@@ -3,13 +3,11 @@
 #include "comm.h"
 #include "proto.h"
 
-#define ORIGINAL_FDS_SIZE 10
-
 void init_pollfd_record(struct pollfd ** fds_ptr, int no_of_record, int fd){
 
   (*fds_ptr)[no_of_record].fd = fd;
   (*fds_ptr)[no_of_record].events = POLLIN;
-  (*fds_ptr)[no_of_record].revents = no_of_record;
+  (*fds_ptr)[no_of_record].revents = 0;
 
 }
 
@@ -37,6 +35,9 @@ void * run_comm_thread(void * arg_struct){
 
   while( true ){
 
+    printf("Poll\n");
+
+
     if( (err_poll = poll( fds,fds_size, -1)) < 0)
       errx(1,"poll");
     
@@ -47,7 +48,7 @@ void * run_comm_thread(void * arg_struct){
 
     }      
 
-    // communivation between threads
+    // communication between threads
     if( fds[1].revents & POLLIN){
 
       process_comm_request(&fds, &fds_size);
@@ -59,9 +60,12 @@ void * run_comm_thread(void * arg_struct){
 
       if( fds[client_no].revents & POLLIN ){
       
+        printf("Entered block %d\n", client_no);
+        
         process_client_request(&fds, &fds_size, client_no);
 
       }
+
     }
     
   }
@@ -199,12 +203,35 @@ void process_client_request(struct pollfd ** fds, int * fds_size, int client_no)
 
 int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd){
 
-  *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)) );
+  char * usr_name = malloc(30);
+  int i;
+
+  *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
   if(*fds_ptr == NULL)
     err(1,"realloc");
 
   init_pollfd_record( fds_ptr, *fds_size, fd);
   
+  // send chatroom info to new user
+  send_message((*fds_ptr)[*fds_size].fd, "----- Connected to room -----");
+  if( *fds_size > 2 ){
+
+    send_message((*fds_ptr)[*fds_size].fd, "Current users:");
+    for(i = 2; i < *fds_size; i++){
+      sprintf(usr_name, "%d", i);
+      send_message((*fds_ptr)[*fds_size].fd, usr_name);
+    }
+
+  }
+
+  // send message to others as well
+  for(i = 2; i < *fds_size; i++){
+    sprintf(usr_name, "New user connected: %d", (*fds_ptr)[*fds_size].fd);
+    send_message((*fds_ptr)[i].fd, usr_name);
+  }
+
+  free(usr_name);
+
   (*fds_size)++;
 
   return EXIT_SUCCESS;
@@ -219,9 +246,14 @@ int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
     (*fds)[i-1] = (*fds)[i];
   }
   
+
   (*fds_size)--;
 
-  return EXIT_SUCCESS;
+  *fds = realloc(*fds, sizeof(struct pollfd) * (*fds_size));
+  if( *fds == NULL)
+    err(1, "realloc");
+
+  return EXIT_SUCCESS; 
 }
 
 void create_comm_thread(char * name){
@@ -247,7 +279,6 @@ void create_comm_thread(char * name){
   printf("Initialized\n");
 
   // ----- APPEND TO LIST -----
-
 
   // get pointer to the last element of thread_list
   if( pthread_mutex_lock(&thr_list_mx) != 0)
