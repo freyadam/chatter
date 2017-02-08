@@ -92,7 +92,7 @@ void * run_accept_thread(void * arg){
     client_fd = accept(fd, NULL, 0);    
     
     // send username and file descriptor of newly accepted client to the appropriate thread
-    send_message((*thread_list).comm_fd, "Placeholder name");
+    send_message((*thread_list).comm_fd, "Placeholder");
 
     client_fd_str = malloc( sizeof(char) * 6);
     sprintf(client_fd_str, "%d", client_fd); 

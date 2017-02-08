@@ -15,7 +15,6 @@ void * run_comm_thread(void * arg_struct){
 
   free(args);
   
-  int err_dispatch;
   int fds_size = 2; // priority channel + thread communication channel
   struct pollfd * fds = malloc( sizeof(struct pollfd) * fds_size); 
       
@@ -31,71 +30,24 @@ void * run_comm_thread(void * arg_struct){
 
   printf("Polling...\n");
   
-  char * message, * prefix, * new_username;
-  message = NULL;
-  prefix = NULL;
-  int err_poll, j, new_fd, client_no;
+  int err_poll, client_no;
 
   while( true ){
-
-    printf("Entering poll...\n");
-
 
     if( (err_poll = poll( fds,fds_size, -1)) < 0)
       errx(1,"poll");
     
     // priority channel
     if( fds[0].revents & POLLIN ){
-      prefix = NULL; message = NULL;
-      get_dispatch(fds[0].fd, &prefix, &message);
-      printf("Priority message received: %s\n", prefix);      
-      if( strcmp(prefix,"END") == 0){
-        for( j = 2; j < fds_size; j++){ // send end to all clients
-          send_end(fds[j].fd);
-        }
-        free(prefix); free(message);
-        pthread_exit(NULL);
-      }
-      free(prefix); free(message);
+
+      process_priority_request( fds, fds_size );
+
     }      
 
     
     if( fds[1].revents & POLLIN){
 
-      prefix = NULL; message = NULL;
-
-      // add new client
-      if( get_dispatch(fds[1].fd, &prefix, &message) != EXIT_SUCCESS)
-        errx(1,"get_dispatch");
-
-      if( strcmp(prefix, "MSG") != 0)
-        errx(1,"new_client");
-
-      new_username = message;
-      message = NULL;
-      
-      if( get_dispatch(fds[1].fd, &prefix, &message) != EXIT_SUCCESS)
-        errx(1,"get_dispatch");
-
-      if( strcmp(prefix, "MSG") == 0)
-        new_fd = atoi(message);
-      else
-        errx(1,"new_client");
-
-      printf("New client: %s -- %d\n", new_username, new_fd);
-
-      // add the new client
-      add_client(&fds, &fds_size, new_fd);
-
-      printf("New fds_size: %d, fd[2]: %d\n", fds_size, fds[2].fd);
-
-      free(new_username);
-
-      // release allocated resources
-      if( prefix != NULL)
-        free(prefix); 
-      if( message != NULL)
-        free(message);
+      process_comm_request(&fds, &fds_size);
 
     }    
     
@@ -104,54 +56,7 @@ void * run_comm_thread(void * arg_struct){
 
       if( fds[client_no].revents & POLLIN ){
       
-        prefix = NULL; message = NULL;
-      
-        err_dispatch = get_dispatch(fds[client_no].fd, &prefix, &message);
-        if( err_dispatch == -1) // something went wrong
-          errx(1, "get_dispatch");
-        else if( err_dispatch == EOF_IN_STREAM) // EOF
-
-          // end fds[client_no];
-          fds[client_no].events = 0;
-
-        else{ // everything worked well --> valid message
-
-
-          printf("Ok\n");
-
-          if( strcmp(prefix, "ERR" ) == 0){
-          
-            send_message(fds[client_no].fd, "ERR");
-
-          } else if( strcmp(prefix, "EXT" ) == 0){
-
-            // back to menu
-            send_message(fds[client_no].fd, "EXT");
-
-          } else if( strcmp(prefix, "END" ) == 0){
-
-            // end connection
-            printf("Ending connection for client %d\n", client_no);
-            delete_client(&fds, &fds_size, client_no);     
-
-          } else if( strcmp(prefix, "CMD" ) == 0){
-
-            // perform cmd
-            send_message(fds[client_no].fd, "CMD");          
-          
-          } else if( strcmp(prefix, "MSG" ) == 0){
-          
-            // send message to others
-            send_message(fds[client_no].fd, "MSG");          
-          }
-       
-          // release allocated resources
-          if( prefix != NULL)
-            free(prefix); 
-          if( message != NULL)
-            free(message);
-
-        }
+        process_client_request(&fds, &fds_size, client_no);
 
       }
     }
@@ -159,6 +64,124 @@ void * run_comm_thread(void * arg_struct){
   }
   
   pthread_exit(NULL);
+
+}
+
+void process_priority_request(struct pollfd * fds, int fds_size){
+
+  char * prefix, * message;
+  int client_no;
+  prefix = NULL; message = NULL;
+  get_dispatch(fds[0].fd, &prefix, &message);
+
+  if( message != NULL )
+    printf("Priority message received: %s _ %s\n", prefix, message);      
+  else 
+    printf("Priority message received: %s\n", prefix);      
+
+  if( strcmp(prefix,"END") == 0){
+    for( client_no = 2; client_no < fds_size; client_no++){ // send end to all clients
+      send_end(fds[client_no].fd);
+    }
+    free(prefix); free(message);
+    pthread_exit(NULL);
+  }
+  free(prefix); free(message);
+
+}
+
+void process_comm_request(struct pollfd ** fds, int * fds_size){
+
+  int new_fd;
+  char * prefix, * message, * new_username;
+  prefix = NULL; message = NULL;
+
+  // add new client
+  if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+    errx(1,"get_dispatch");
+
+  if( strcmp(prefix, "MSG") != 0)
+    errx(1,"new_client");
+
+  new_username = message;
+  message = NULL;
+      
+  if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+    errx(1,"get_dispatch");
+
+  if( strcmp(prefix, "MSG") == 0)
+    new_fd = atoi(message);
+  else
+    errx(1,"new_client");
+
+  printf("New client: %s -- %d\n", new_username, new_fd);
+
+  // add the new client
+  add_client(fds, fds_size, new_fd);
+
+  printf("New fds_size: %d, fd[2]: %d\n", *fds_size, (*fds)[2].fd);
+
+  free(new_username);
+
+  // release allocated resources
+  if( prefix != NULL)
+    free(prefix); 
+  if( message != NULL)
+    free(message);
+
+}
+
+void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
+
+  int err_dispatch;
+  char * prefix, * message;
+  prefix = NULL; message = NULL;
+      
+  err_dispatch = get_dispatch((*fds)[client_no].fd, &prefix, &message);
+  if( err_dispatch == -1) // something went wrong
+    errx(1, "get_dispatch");
+  else if( err_dispatch == EOF_IN_STREAM) // EOF
+
+    // end (*fds)[client_no];
+    (*fds)[client_no].events = 0;
+
+  else{ // everything worked well --> valid message
+
+    printf("Dispatch received\n");
+
+    if( strcmp(prefix, "ERR" ) == 0){
+          
+      send_message((*fds)[client_no].fd, "ERR");
+
+    } else if( strcmp(prefix, "EXT" ) == 0){
+
+      // back to menu
+      send_message((*fds)[client_no].fd, "EXT");
+
+    } else if( strcmp(prefix, "END" ) == 0){
+
+      // end connection
+      printf("Closing connection for client %d\n", client_no);
+      delete_client(fds, fds_size, client_no);     
+
+    } else if( strcmp(prefix, "CMD" ) == 0){
+
+      // perform cmd
+      send_message((*fds)[client_no].fd, "CMD");          
+          
+    } else if( strcmp(prefix, "MSG" ) == 0){
+          
+      // send message to others
+      send_message((*fds)[client_no].fd, "MSG");          
+    }
+       
+    // release allocated resources
+    if( prefix != NULL)
+      free(prefix); 
+    if( message != NULL)
+      free(message);
+
+  }
 
 }
 
