@@ -17,7 +17,7 @@ void * run_comm_thread(void * arg_struct){
   
   int comm_fd = args->comm_fd;
   int priority_fd = args->priority_fd; 
-  char * room_name = args->room_name;
+  char * room_name = args->data_ptr->name;
 
   free(args);
   
@@ -57,7 +57,8 @@ void * run_comm_thread(void * arg_struct){
     for( client_no = 2; client_no < fds_size; client_no++){      
 
       if( fds[client_no].revents & POLLIN ){
-              
+      
+        
         process_client_request(&fds, &fds_size, client_no);
 
       }
@@ -218,6 +219,12 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd, char * room_nam
     }
 
   }
+  send_message((*fds_ptr)[*fds_size].fd, "Commands:");
+  send_message((*fds_ptr)[*fds_size].fd, "/cmd task ... Perform task on server.");
+  send_message((*fds_ptr)[*fds_size].fd, "/ext ... Exit to menu.");
+  send_message((*fds_ptr)[*fds_size].fd, "/end ... End connection.");
+
+  
 
   // send message to others as well
   for(i = 2; i < *fds_size; i++){
@@ -298,7 +305,7 @@ void create_comm_thread(char * name){
   struct new_thread_args * args = malloc( sizeof(struct new_thread_args) );
   args->comm_fd = comm_pipe[0];
   args->priority_fd = priority_pipe[0]; 
-  args->room_name = "Room Name Placeholder";
+  args->data_ptr = thr_data;
 
   if( pthread_create(&(thr_ptr->id), NULL, &run_comm_thread, (void *) args) != 0)
     errx(1, "pthread_create");

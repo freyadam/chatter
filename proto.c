@@ -121,7 +121,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
     int msg_length = atoi(*message_ptr);
 
     free(*message_ptr);
-    *message_ptr = malloc( sizeof(char) * msg_length );
+    *message_ptr = malloc( sizeof(char) * (msg_length+1) );
     if( message_ptr == NULL )
       err(1,"malloc");
 

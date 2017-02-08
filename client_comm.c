@@ -114,8 +114,6 @@ int run_client(char * server_address, int server_port){
 
   set_sigint_handler();
 
-  printf("You're connected!\n");
-
   struct pollfd * fds = malloc( sizeof(struct pollfd) * 2); 
 
   // initialize pollfd for server
