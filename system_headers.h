@@ -32,7 +32,6 @@ struct thread_data {
 struct new_thread_args {
   int comm_fd;
   int priority_fd;
-  int client_fd;
 };
 
 struct thread_data * thread_list;

@@ -19,7 +19,6 @@ void * run_comm_thread(void * arg_struct){
   
   int comm_fd = args->comm_fd;
   int priority_fd = args->priority_fd; 
-  //int client_fd = args->client_fd; 
 
   free(args);
   
@@ -48,14 +47,14 @@ void * run_comm_thread(void * arg_struct){
 
     }      
 
-    
+    // communivation between threads
     if( fds[1].revents & POLLIN){
 
       process_comm_request(&fds, &fds_size);
 
     }    
     
-    // client test
+    // client threads
     for( client_no = 2; client_no < fds_size; client_no++){      
 
       if( fds[client_no].revents & POLLIN ){
@@ -173,7 +172,7 @@ void process_client_request(struct pollfd ** fds, int * fds_size, int client_no)
           
     } else if( strcmp(prefix, "MSG" ) == 0){
           
-      send_message((*fds)[client_no].fd, "MSG received");          
+      //send_message((*fds)[client_no].fd, "MSG received");          
       
       // send message to all the other clients
       resend_msg = malloc( sizeof(char) * ( 1 + 4 + 2 + strlen(message) + 1 ));
@@ -227,7 +226,6 @@ int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
 
 void create_comm_thread(char * name){
 
-  int client_fd = 0;
   int comm_pipe[2], priority_pipe[2];
   struct thread_data * thr_data = malloc( sizeof(struct thread_data) );
   bzero(thr_data, sizeof(struct thread_data));
@@ -274,7 +272,6 @@ void create_comm_thread(char * name){
   struct new_thread_args * args = malloc( sizeof(struct new_thread_args) );
   args->comm_fd = comm_pipe[0];
   args->priority_fd = priority_pipe[0]; 
-  args->client_fd = client_fd;
 
   if( pthread_create(&(thr_ptr->id), NULL, &run_comm_thread, (void *) args) != 0)
     errx(1, "pthread_create");
