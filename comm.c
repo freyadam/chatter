@@ -76,6 +76,7 @@ void process_priority_request(struct pollfd * fds, int fds_size, char * room_nam
   prefix = NULL; message = NULL;
   get_dispatch(fds[0].fd, &prefix, &message);
 
+
   if( message != NULL )
     printf("Priority message received in %s: %s _ %s\n", room_name, prefix, message);      
   else 

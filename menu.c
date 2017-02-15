@@ -40,7 +40,7 @@ void * run_menu_thread( void * arg_struct ){
     // communication between threads
     if( fds[1].revents & POLLIN){
 
-      process_comm_request(&fds, &fds_size, room_name);
+      process_comm_request_(&fds, &fds_size, room_name);
 
     }    
     
@@ -50,7 +50,7 @@ void * run_menu_thread( void * arg_struct ){
       if( fds[client_no].revents & POLLIN ){
       
         
-        process_client_request(&fds, &fds_size, client_no);
+        process_client_request_(&fds, &fds_size, client_no);
 
       }
 
@@ -117,3 +117,144 @@ void create_menu_thread(){
     errx(1, "pthread_create");
 
 }
+
+int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
+
+  char * name = malloc(100);
+
+  *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
+  if(*fds_ptr == NULL)
+    err(1,"realloc");
+
+  init_pollfd_record( fds_ptr, *fds_size, fd);
+  
+  // send chatroom info to new user
+  sprintf( name, "----- Connected to Menu -----");
+  send_message(fd, name);
+
+  // list rooms 
+  send_message(fd, "Rooms:");
+
+  struct thread_data * thr_ptr;
+  // skip menu and iterate over all rooms 
+  for( thr_ptr = thread_list->next; thr_ptr != NULL; thr_ptr = thr_ptr->next)
+    send_message(fd, thr_ptr->name);
+  
+  // list options
+  send_message(fd, "Options:");
+  send_message(fd, ".....");
+  
+  // how to pick your setting
+  send_message(fd, "To access your option simply type its number.");
+
+  free(name);
+
+  (*fds_size)++;
+
+  return EXIT_SUCCESS;
+
+}
+
+void process_comm_request_(struct pollfd ** fds, int * fds_size, char * room_name){
+
+  int new_fd;
+  char * prefix, * message, * new_username;
+  prefix = NULL; message = NULL;
+
+  // add new client
+  if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+    errx(1,"get_dispatch");
+
+  if( strcmp(prefix, "MSG") != 0)
+    errx(1,"new_client");
+
+  new_username = message;
+  message = NULL;
+      
+  if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+    errx(1,"get_dispatch");
+
+  if( strcmp(prefix, "MSG") == 0)
+    new_fd = atoi(message);
+  else
+    errx(1,"new_client");
+
+  printf("New client: %s -- %d\n", new_username, new_fd);
+
+  // add the new client
+  add_client_to_menu(fds, fds_size, new_fd);
+
+  free(new_username);  
+
+  // release allocated resources
+  if( prefix != NULL)
+    free(prefix); 
+  if( message != NULL)
+    free(message);
+
+}
+
+
+void process_client_request_(struct pollfd ** fds, int * fds_size, int client_no){
+
+  int err_no, i;
+  char * prefix, * message, * resend_msg;
+  prefix = NULL; message = NULL;
+      
+  err_no = get_dispatch((*fds)[client_no].fd, &prefix, &message);
+  if( err_no == -1) // something went wrong
+    errx(1, "get_dispatch");
+  else if( err_no == EOF_IN_STREAM) // EOF
+
+    // end (*fds)[client_no];
+    (*fds)[client_no].events = 0;
+
+  else{ // everything worked well --> valid message
+
+    printf("Dispatch received\n");
+
+    if( strcmp(prefix, "ERR" ) == 0){
+          
+      send_message((*fds)[client_no].fd, "Error message received.");
+
+    } else if( strcmp(prefix, "EXT" ) == 0){
+
+      // back to menu
+      send_message((*fds)[client_no].fd, "EXT: This function is currently disabled.");
+
+    } else if( strcmp(prefix, "END" ) == 0){
+
+      // end connection
+      printf("Closing connection for client %d\n", client_no);
+      delete_client(fds, fds_size, client_no);     
+
+    } else if( strcmp(prefix, "CMD" ) == 0){
+
+      // perform cmd
+      send_message((*fds)[client_no].fd, "CMD: This function is currently disabled.");          
+          
+    } else if( strcmp(prefix, "MSG" ) == 0){
+                
+      // send message to all the other clients
+      resend_msg = malloc( sizeof(char) * ( 1 + 4 + 2 + strlen(message) + 1 ));
+      if( resend_msg == NULL)
+        err(1,"malloc");
+      err_no = sprintf( resend_msg, "<%d> %s", client_no, message);
+      for (i = 2; i < *fds_size; i++) {
+        if( i != client_no )
+          send_message((*fds)[i].fd, resend_msg);      
+      }
+
+
+    }
+       
+    // release allocated resources
+    if( prefix != NULL)
+      free(prefix); 
+    if( message != NULL)
+      free(message);
+
+  }
+
+}
+
