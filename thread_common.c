@@ -11,6 +11,31 @@ void init_pollfd_record(struct pollfd ** fds_ptr, int no_of_record, int fd){
 
 }
 
+int transfer_client(int room_fd, struct pollfd ** fds, int * fds_size, int client_no){
+
+  int i, client_fd = (*fds)[client_no].fd;
+  char * client_no_char = malloc(25);
+
+  sprintf(client_no_char, "user_placeholder");
+  send_message(room_fd, client_no_char);
+  sprintf(client_no_char, "%d", client_fd);
+  send_message(room_fd, client_no_char);
+
+  for( i = client_no+1; i < *fds_size; i++){
+    (*fds)[i-1] = (*fds)[i];
+  }
+    
+  (*fds_size)--;
+
+  *fds = realloc(*fds, sizeof(struct pollfd) * (*fds_size));
+  if( *fds == NULL)
+    err(1, "realloc");
+
+  free(client_no_char);
+
+  return EXIT_SUCCESS;
+}
+
 int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
 
   int i;

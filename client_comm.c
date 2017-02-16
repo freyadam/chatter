@@ -227,6 +227,11 @@ int process_client_request(int server_fd, int line_fd){
     return send_end(server_fd);
     exit(0);
 
+  } else if( strcmp(line, "/ext") == 0){
+
+    return send_exit(server_fd);
+    exit(0);
+
   } else {
 
     return send_message(server_fd, line); // MSG

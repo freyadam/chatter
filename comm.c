@@ -104,11 +104,12 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
 
 static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
 
-  int err_no, i;
+  int err_no, i, client_fd;
   char * prefix, * message, * resend_msg;
   prefix = NULL; message = NULL;
+  client_fd = (*fds)[client_no].fd;
       
-  err_no = get_dispatch((*fds)[client_no].fd, &prefix, &message);
+  err_no = get_dispatch(client_fd, &prefix, &message);
   if( err_no == -1) // something went wrong
     errx(1, "get_dispatch");
   else if( err_no == EOF_IN_STREAM) // EOF
@@ -122,12 +123,12 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 
     if( strcmp(prefix, "ERR" ) == 0){
           
-      send_message((*fds)[client_no].fd, "Error message received.");
+      send_message(client_fd, "Error message received.");
 
     } else if( strcmp(prefix, "EXT" ) == 0){
 
       // back to menu
-      send_message((*fds)[client_no].fd, "EXT: This function is currently disabled.");
+      transfer_client(thread_list->comm_fd, fds, fds_size, client_no);
 
     } else if( strcmp(prefix, "END" ) == 0){
 
@@ -138,7 +139,7 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
     } else if( strcmp(prefix, "CMD" ) == 0){
 
       // perform cmd
-      send_message((*fds)[client_no].fd, "CMD: This function is currently disabled.");          
+      send_message(client_fd, "CMD: This function is currently disabled.");          
           
     } else if( strcmp(prefix, "MSG" ) == 0){
                 
