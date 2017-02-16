@@ -118,6 +118,32 @@ void create_menu_thread(){
 
 }
 
+
+int transfer_client(int room_fd, struct pollfd ** fds, int * fds_size, int client_no){
+
+  int i, client_fd = (*fds)[client_no].fd;
+  char * client_no_char = malloc(25);
+
+  sprintf(client_no_char, "user_placeholder");
+  send_message(room_fd, client_no_char);
+  sprintf(client_no_char, "%d", client_fd);
+  send_message(room_fd, client_no_char);
+
+  for( i = client_no+1; i < *fds_size; i++){
+    (*fds)[i-1] = (*fds)[i];
+  }
+    
+  (*fds_size)--;
+
+  *fds = realloc(*fds, sizeof(struct pollfd) * (*fds_size));
+  if( *fds == NULL)
+    err(1, "realloc");
+
+  free(client_no_char);
+
+  return EXIT_SUCCESS;
+}
+
 int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
 
   // SUPPOSE THAT NAME IS SHORTER THAN 100 CHARACTERS
@@ -154,7 +180,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
   send_message(fd, name);
   
   // how to pick your setting
-  send_message(fd, "To select your option simply type its associated number or letter respectively.");
+  send_message(fd, "To select your option simply type its associated number or letter.");
 
   free(name);
 
@@ -176,7 +202,7 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
 
   if( strcmp(prefix, "MSG") != 0){
     printf("Malformed dispatch from room %s\n", room_name);
-    break;
+    return;
   }
 
   new_username = message;
@@ -189,7 +215,7 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
     new_fd = atoi(message);
   else {
     printf("Malformed dispatch from room %s\n", room_name);
-    break;
+    return;
   }
 
   printf("New client: %s -- %d\n", new_username, new_fd);
@@ -210,11 +236,12 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
 
 static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
 
-  int err_no, i;
-  char * prefix, * message, * resend_msg;
+  int err_no, client_fd;
+  char * prefix, * message;
   prefix = NULL; message = NULL;
-      
-  err_no = get_dispatch((*fds)[client_no].fd, &prefix, &message);
+  client_fd = (*fds)[client_no].fd;
+
+  err_no = get_dispatch(client_fd, &prefix, &message);
   if( err_no == -1) // something went wrong
     errx(1, "get_dispatch");
   else if( err_no == EOF_IN_STREAM) // EOF
@@ -228,12 +255,12 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 
     if( strcmp(prefix, "ERR" ) == 0){
           
-      send_message((*fds)[client_no].fd, "Error message received.");
+      send_message(client_fd, "Error message received.");
 
     } else if( strcmp(prefix, "EXT" ) == 0){
 
       // back to menu
-      send_message((*fds)[client_no].fd, "EXT: This function is currently disabled.");
+      send_message(client_fd, "EXT: Nowhere to exit to from menu.");
 
     } else if( strcmp(prefix, "END" ) == 0){
 
@@ -244,20 +271,43 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
     } else if( strcmp(prefix, "CMD" ) == 0){
 
       // perform cmd
-      send_message((*fds)[client_no].fd, "CMD: This function is currently disabled.");          
+      send_message(client_fd, "CMD: This function is disabled in menu.");          
           
     } else if( strcmp(prefix, "MSG" ) == 0){
                 
-      // send message to all the other clients
-      resend_msg = malloc( sizeof(char) * ( 1 + 4 + 2 + strlen(message) + 1 ));
-      if( resend_msg == NULL)
-        err(1,"malloc");
-      err_no = sprintf( resend_msg, "<%d> %s", client_no, message);
-      for (i = 2; i < *fds_size; i++) {
-        if( i != client_no )
-          send_message((*fds)[i].fd, resend_msg);      
-      }
+      if( strcmp(message, "u" ) == 0){
 
+        send_message(client_fd, "Creating new user is not implemented yet.");          
+
+      } else if( strcmp(message, "c" ) == 0){
+
+        send_message(client_fd, "Creating new chatroom is not implemented yet.");          
+
+      } else { // enter chat room
+        
+        errno = 0;
+        int chat_no = strtol(message, NULL, 10);
+
+        if( errno != 0 || chat_no <= 0 ){
+          send_message(client_fd, "Invalid message - no option selected."); 
+          return;
+        }
+
+        // select which chat room to enter
+        struct thread_data * thr_ptr;
+        for( thr_ptr = thread_list->next; thr_ptr != NULL && chat_no-- > 1; thr_ptr = thr_ptr->next){}
+        
+        if( chat_no >= 1 ){
+          send_message(client_fd, "Such a room does not exist, the number is too high."); 
+          return;
+        }
+
+        // transfer client to the chat room
+        printf("%s\n", thr_ptr->name);
+        if( transfer_client(thr_ptr->comm_fd, fds, fds_size, client_no) != EXIT_SUCCESS )
+          errx(1, "transfer_client");
+
+      }
 
     }
        

@@ -72,6 +72,7 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
   if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
     errx(1,"get_dispatch");
 
+
   if( strcmp(prefix, "MSG") != 0)
     errx(1,"new_client");
 

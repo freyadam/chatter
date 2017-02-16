@@ -1,6 +1,6 @@
 
 
-CLIENT_SRC=client.c client_comm.c proto.c 
+CLIENT_SRC=client.c client_comm.c proto.c thread_common.c
 SERVER_SRC=server.c accept.c comm.c menu.c proto.c signal.c thread_common.c
 C_FLAGS=-Wall
 LD_FLAGS=-pthread

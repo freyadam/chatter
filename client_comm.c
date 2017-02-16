@@ -2,7 +2,7 @@
 #include "system_headers.h"
 #include "proto.h"
 #include "client_comm.h"
-
+#include "thread_common.h"
 
 char * cmd_argument(char * line){
   return line+5;
@@ -117,14 +117,10 @@ int run_client(char * server_address, int server_port){
   struct pollfd * fds = malloc( sizeof(struct pollfd) * 2); 
 
   // initialize pollfd for server
-  fds[0].fd = server_fd;
-  fds[0].events = POLLIN;
-  fds[0].revents = 0;
+  init_pollfd_record(&fds, 0, server_fd);
 
   // initialize pollfd for user-input
-  fds[1].fd = line_pipe[0];
-  fds[1].events = POLLIN;
-  fds[1].revents = 0;
+  init_pollfd_record(&fds, 1, line_pipe[0]);
 
   // print server info
 
