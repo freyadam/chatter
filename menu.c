@@ -40,7 +40,7 @@ void * run_menu_thread( void * arg_struct ){
     // communication between threads
     if( fds[1].revents & POLLIN){
 
-      process_comm_request_(&fds, &fds_size, room_name);
+      process_comm_request(&fds, &fds_size, room_name);
 
     }    
     
@@ -50,7 +50,7 @@ void * run_menu_thread( void * arg_struct ){
       if( fds[client_no].revents & POLLIN ){
       
         
-        process_client_request_(&fds, &fds_size, client_no);
+        process_client_request(&fds, &fds_size, client_no);
 
       }
 
@@ -120,6 +120,7 @@ void create_menu_thread(){
 
 int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
 
+  // SUPPOSE THAT NAME IS SHORTER THAN 100 CHARACTERS
   char * name = malloc(100);
 
   *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
@@ -135,17 +136,25 @@ int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
   // list rooms 
   send_message(fd, "Rooms:");
 
-  struct thread_data * thr_ptr;
   // skip menu and iterate over all rooms 
-  for( thr_ptr = thread_list->next; thr_ptr != NULL; thr_ptr = thr_ptr->next)
-    send_message(fd, thr_ptr->name);
-  
+  int counter = 1;  
+  struct thread_data * thr_ptr;
+  for( thr_ptr = thread_list->next; thr_ptr != NULL; thr_ptr = thr_ptr->next){
+    sprintf(name, "%d - %s", counter++, thr_ptr->name);
+    send_message(fd, name);
+  }
+
   // list options
   send_message(fd, "Options:");
-  send_message(fd, ".....");
+
+  sprintf(name, "u - Create new user");
+  send_message(fd, name);
+
+  sprintf(name, "c - Create new chatroom");
+  send_message(fd, name);
   
   // how to pick your setting
-  send_message(fd, "To access your option simply type its number.");
+  send_message(fd, "To select your option simply type its associated number or letter respectively.");
 
   free(name);
 
@@ -155,7 +164,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
 
 }
 
-void process_comm_request_(struct pollfd ** fds, int * fds_size, char * room_name){
+static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name){
 
   int new_fd;
   char * prefix, * message, * new_username;
@@ -165,8 +174,10 @@ void process_comm_request_(struct pollfd ** fds, int * fds_size, char * room_nam
   if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
     errx(1,"get_dispatch");
 
-  if( strcmp(prefix, "MSG") != 0)
-    errx(1,"new_client");
+  if( strcmp(prefix, "MSG") != 0){
+    printf("Malformed dispatch from room %s\n", room_name);
+    break;
+  }
 
   new_username = message;
   message = NULL;
@@ -176,8 +187,10 @@ void process_comm_request_(struct pollfd ** fds, int * fds_size, char * room_nam
 
   if( strcmp(prefix, "MSG") == 0)
     new_fd = atoi(message);
-  else
-    errx(1,"new_client");
+  else {
+    printf("Malformed dispatch from room %s\n", room_name);
+    break;
+  }
 
   printf("New client: %s -- %d\n", new_username, new_fd);
 
@@ -195,7 +208,7 @@ void process_comm_request_(struct pollfd ** fds, int * fds_size, char * room_nam
 }
 
 
-void process_client_request_(struct pollfd ** fds, int * fds_size, int client_no){
+static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
 
   int err_no, i;
   char * prefix, * message, * resend_msg;

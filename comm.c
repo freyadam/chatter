@@ -62,7 +62,7 @@ void * run_comm_thread(void * arg_struct){
 
 }
 
-void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name){
+static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name){
 
   int new_fd;
   char * prefix, * message, * new_username;
@@ -101,7 +101,7 @@ void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name
 
 }
 
-void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
+static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
 
   int err_no, i;
   char * prefix, * message, * resend_msg;
