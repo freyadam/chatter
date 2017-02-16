@@ -2,7 +2,7 @@
 #include "system_headers.h"
 #include "menu.h"
 #include "proto.h"
-#include "comm.h"
+#include "thread_common.h"
 
 void * run_menu_thread( void * arg_struct ){
 
