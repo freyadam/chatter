@@ -7,6 +7,43 @@
 static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name);
 static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no);
 
+void poll_cycle( struct pollfd ** fds_ptr, int * fds_size_ptr, char * room_name ){
+
+  int err_poll, client_no;
+  struct pollfd * fds = *fds_ptr;
+  int fds_size = *fds_size_ptr;
+
+  if( (err_poll = poll( fds,fds_size, -1)) < 0)
+    errx(1,"poll");
+    
+  // priority channel
+  if( fds[0].revents & POLLIN ){
+
+    process_priority_request( fds, fds_size, room_name );
+
+  }      
+
+  // communication between threads
+  if( fds[1].revents & POLLIN){
+
+    process_comm_request(&fds, &fds_size, room_name);
+
+  }    
+    
+  // client threads
+  for( client_no = 2; client_no < fds_size; client_no++){      
+
+    if( fds[client_no].revents & POLLIN ){
+      
+        
+      process_client_request(&fds, &fds_size, client_no);
+
+    }
+
+  }
+
+}
+
 void * run_comm_thread(void * arg_struct){
 
   struct new_thread_args * args = (struct new_thread_args *) arg_struct;
@@ -26,38 +63,9 @@ void * run_comm_thread(void * arg_struct){
   // initialize pollfd for thread communication channel
   init_pollfd_record( &fds, 1, comm_fd);
   
-  int err_poll, client_no;
-
   while( true ){
 
-    if( (err_poll = poll( fds,fds_size, -1)) < 0)
-      errx(1,"poll");
-    
-    // priority channel
-    if( fds[0].revents & POLLIN ){
-
-      process_priority_request( fds, fds_size, room_name );
-
-    }      
-
-    // communication between threads
-    if( fds[1].revents & POLLIN){
-
-      process_comm_request(&fds, &fds_size, room_name);
-
-    }    
-    
-    // client threads
-    for( client_no = 2; client_no < fds_size; client_no++){      
-
-      if( fds[client_no].revents & POLLIN ){
-      
-        
-        process_client_request(&fds, &fds_size, client_no);
-
-      }
-
-    }
+    poll_cycle(&fds, &fds_size, room_name);
     
   }
   
@@ -74,7 +82,6 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
   // add new client
   if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
     errx(1,"get_dispatch");
-
 
   if( strcmp(prefix, "MSG") != 0)
     errx(1,"new_client");
@@ -104,6 +111,7 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
     free(message);
 
 }
+
 
 static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
 
@@ -169,6 +177,33 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 
 }
 
+void send_info_to_new_user(struct pollfd ** fds_ptr, int * fds_size, char * room_name){
+
+  char * name = malloc(100);
+  int i, fd;
+  fd = (*fds_ptr)[*fds_size].fd;
+
+  sprintf( name, "----- Connected to room %s -----", room_name);
+  send_message(fd, name);
+  if( *fds_size > 2 ){
+
+    send_message(fd, "Current users:");
+    for(i = 2; i < *fds_size; i++){
+      sprintf(name, "%d", i);
+      send_message(fd, name);
+    }
+
+  }
+
+  send_message(fd, "Commands:");
+  send_message(fd, "/cmd task ... Perform task on server.");
+  send_message(fd, "/ext ... Exit to menu.");
+  send_message(fd, "/end ... End connection.");
+
+  free(name);
+
+}
+
 int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd, char * room_name){
 
   char * name = malloc(100);
@@ -181,24 +216,7 @@ int add_client(struct pollfd ** fds_ptr, int * fds_size, int fd, char * room_nam
   init_pollfd_record( fds_ptr, *fds_size, fd);
   
   // send chatroom info to new user
-  sprintf( name, "----- Connected to room %s -----", room_name);
-  send_message((*fds_ptr)[*fds_size].fd, name);
-  if( *fds_size > 2 ){
-
-    send_message((*fds_ptr)[*fds_size].fd, "Current users:");
-    for(i = 2; i < *fds_size; i++){
-      sprintf(name, "%d", i);
-      send_message((*fds_ptr)[*fds_size].fd, name);
-    }
-
-  }
-
-
-  send_message((*fds_ptr)[*fds_size].fd, "Commands:");
-  send_message((*fds_ptr)[*fds_size].fd, "/cmd task ... Perform task on server.");
-  send_message((*fds_ptr)[*fds_size].fd, "/ext ... Exit to menu.");
-  send_message((*fds_ptr)[*fds_size].fd, "/end ... End connection.");
-
+  send_info_to_new_user(fds_ptr, fds_size, room_name);
 
   // send message to others as well
   for(i = 2; i < *fds_size; i++){
