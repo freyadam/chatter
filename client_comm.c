@@ -4,8 +4,14 @@
 #include "client_comm.h"
 #include "thread_common.h"
 
-char * cmd_argument(char * line){
-  return line+5;
+void init_hints( struct addrinfo * hints_ptr){
+
+  struct addrinfo hints = *hints_ptr;
+
+  bzero(&hints, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+
 }
 
 int get_connected_socket(char * server_address, int server_port){
@@ -14,9 +20,7 @@ int get_connected_socket(char * server_address, int server_port){
   char * server_port_string = malloc( 5 );
   struct addrinfo hints, * result, * addr_info;
 
-  bzero(&hints, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
+  init_hints(&hints);
 
   sprintf( server_port_string, "%d", server_port);
 
@@ -99,10 +103,49 @@ void set_sigint_handler(){
 
 }
 
+void poll_cycle( struct pollfd ** fds_ptr){
+
+  int err_poll, result;
+  struct pollfd * fds = *fds_ptr;
+
+    err_poll = poll(fds, 2, -1);
+    if( err_poll == -1 && errno == EINTR ){
+      send_end(fds[0].fd);
+      printf("Exiting...\n");
+
+      exit(0);
+    } else if ( err_poll == -1)
+      err(1, "poll");
+    
+    // input from server
+    if( fds[0].revents & POLLIN ){
+
+      result = process_server_request(fds[0].fd);
+
+      if( result == EOF_IN_STREAM ){
+        printf("End of transmission\n");            
+        return;
+      } else if( result == EXIT_FAILURE )
+        errx(1, "process_server_request");
+
+    }
+
+    // input from client
+    if( fds[1].revents & POLLIN ){
+
+      result = process_client_request(fds[0].fd, fds[1].fd);
+
+      if( result == EXIT_FAILURE )
+        errx(1, "process_client_request");
+
+    }
+
+}
+
 int run_client(char * server_address, int server_port){
 
   pthread_t get_line_thread;
-  int line_pipe[2], result, err_poll;
+  int line_pipe[2];
 
   int server_fd = get_connected_socket(server_address, server_port);  
 
@@ -122,41 +165,9 @@ int run_client(char * server_address, int server_port){
   // initialize pollfd for user-input
   init_pollfd_record(&fds, 1, line_pipe[0]);
 
-  // print server info
-
   while( true ){
 
-    err_poll = poll(fds, 2, -1);
-    if( err_poll == -1 && errno == EINTR ){
-      send_end(fds[0].fd);
-      printf("Exiting...\n");
-
-      exit(0);
-    } else if ( err_poll == -1)
-      err(1, "poll");
-    
-    // input from server
-    if( fds[0].revents & POLLIN ){
-
-      result = process_server_request(fds[0].fd);
-
-      if( result == EOF_IN_STREAM ){
-        printf("End of transmission\n");            
-        break;
-      } else if( result == EXIT_FAILURE )
-        errx(1, "process_server_request");
-
-    }
-
-    // input from client
-    if( fds[1].revents & POLLIN ){
-
-      result = process_client_request(fds[0].fd, fds[1].fd);
-
-      if( result == EXIT_FAILURE )
-        errx(1, "process_client_request");
-
-    }
+    poll_cycle(&fds);
 
   }  
 
@@ -190,6 +201,7 @@ int process_server_request(int fd){
   } else if( strcmp(prefix, "CMD" ) == 0){
 
     // client doesn't take commands from server
+    send_end(fd);
     return EXIT_FAILURE;
           
   } else if( strcmp(prefix, "MSG" ) == 0){
@@ -207,6 +219,11 @@ int process_server_request(int fd){
   return EXIT_SUCCESS;
 }
 
+
+char * cmd_argument(char * line){
+  return line+5;
+}
+
 int process_client_request(int server_fd, int line_fd){
   
   char * line = NULL;
@@ -214,7 +231,8 @@ int process_client_request(int server_fd, int line_fd){
   if( result == -1 )
     err(1, "get_delim");  
 
-  if( line == strstr(line, "/cmd")){ // CMD
+  if( line == strstr(line, "/cmd")){ // line begins with "/cmd"
+
     if( NULL != strstr(cmd_argument(line), " ")){
       printf("Commands cannot contain spaces\n");
       return EXIT_FAILURE;
@@ -222,19 +240,19 @@ int process_client_request(int server_fd, int line_fd){
         
     return send_command(server_fd, cmd_argument(line));
     
-  } else if( strcmp(line, "/end") == 0){
+  } else if( strcmp(line, "/end") == 0){ // line begins with "/end"
 
     return send_end(server_fd);
     exit(0);
 
-  } else if( strcmp(line, "/ext") == 0){
+  } else if( strcmp(line, "/ext") == 0){ // line begins with "/ext"
 
     return send_exit(server_fd);
     exit(0);
 
-  } else {
+  } else { // type of the dispatch is message
 
-    return send_message(server_fd, line); // MSG
+    return send_message(server_fd, line); 
 
   }
 
