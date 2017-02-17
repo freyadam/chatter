@@ -15,7 +15,7 @@ void accept_signal_handler(int sig){
 int get_listening_socket(int server_port){
 
   int fd, yes = 1;  
-  char * server_port_string = malloc( 5 * sizeof(char) );
+  char * server_port_string = malloc( 5 );
   struct addrinfo hints, * result, * addr_info;
     
   bzero(&hints, sizeof(hints));
@@ -96,7 +96,7 @@ void * run_accept_thread(void * arg){
     // send username and file descriptor of newly accepted client to the appropriate thread
     send_message((*thread_list).comm_fd, "Placeholder");
 
-    client_fd_str = malloc( sizeof(char) * 6);
+    client_fd_str = malloc( 6 );
     sprintf(client_fd_str, "%d", client_fd); 
     send_message((*thread_list).comm_fd, client_fd_str);
     free(client_fd_str);

@@ -22,13 +22,13 @@ int get_delim(int fd, char ** line_ptr, char del){
   int position, line_len, err_read;
   line_len = 10;
   position = 0;
-  char * line = malloc( sizeof(char) * line_len );
+  char * line = malloc( line_len );
   char c;
   while( (err_read = read(fd, &c, 1)) == 1 ){
 
     if( position >= line_len - 1){
       line_len += 10;
-      line = realloc(line,  sizeof(char) * line_len );
+      line = realloc(line, line_len );
       if( line == NULL )
         return -1;
     }
@@ -49,7 +49,7 @@ int get_delim(int fd, char ** line_ptr, char del){
   if( err_read == 0 ){
     if( position >= line_len - 1){
       line_len += 1;
-      line = realloc(line, sizeof(char) * line_len );
+      line = realloc(line, line_len );
       if( line == NULL )
         return -1;
     }
@@ -121,7 +121,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
     int msg_length = atoi(*message_ptr);
 
     free(*message_ptr);
-    *message_ptr = malloc( sizeof(char) * (msg_length+1) );
+    *message_ptr = malloc( msg_length+1 );
     if( message_ptr == NULL )
       err(1,"malloc");
 
@@ -161,7 +161,7 @@ int send_dispatch(int fd, char * dispatch){
 
 int send_message(int fd, char * message){
   
-  char * dispatch = malloc( sizeof(char) * (3 + 1 + MAX_MSG_LEN_SIZE + 1 + strlen(message) + 1 + 1));
+  char * dispatch = malloc(3 + 1 + MAX_MSG_LEN_SIZE + 1 + strlen(message) + 1 + 1);
 
   int result = sprintf(dispatch, "MSG %d %s ", (int)strlen(message), message);
   if( result < 0)
@@ -176,7 +176,7 @@ int send_message(int fd, char * message){
 
 int send_command(int fd, char * cmd){
 
-  char * dispatch = malloc( sizeof(char) * (3 + 1 + strlen(cmd) + 1 + 1));
+  char * dispatch = malloc( (3 + 1 + strlen(cmd) + 1 + 1));
   
   int result = sprintf(dispatch, "CMD %s ", cmd);
   if( result < 0)

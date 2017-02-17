@@ -67,12 +67,12 @@ int main(int argc, char *argv[])
   while((opt = getopt(argc, argv, "c:u:")) != -1)
     switch(opt) {
     case 'c': 
-      command_list = malloc( (strlen(optarg) + 1) * sizeof(char) );
+      command_list = malloc( (strlen(optarg) + 1) );
       if( command_list == NULL )
         errx(1, "command_list malloc");
       strcpy(command_list, optarg); break;
     case 'u':
-      user_list = malloc( (strlen(optarg) + 1) * sizeof(char) );
+      user_list = malloc( (strlen(optarg) + 1) );
       if( user_list == NULL )
         errx(1, "user_list malloc");
       strcpy(user_list, optarg); break;

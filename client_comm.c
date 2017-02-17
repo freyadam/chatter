@@ -11,7 +11,7 @@ char * cmd_argument(char * line){
 int get_connected_socket(char * server_address, int server_port){
 
   int fd;
-  char * server_port_string = malloc( 5 * sizeof(char));
+  char * server_port_string = malloc( 5 );
   struct addrinfo hints, * result, * addr_info;
 
   bzero(&hints, sizeof(hints));

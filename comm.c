@@ -144,7 +144,7 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
     } else if( strcmp(prefix, "MSG" ) == 0){
                 
       // send message to all the other clients
-      resend_msg = malloc( sizeof(char) * ( 1 + 4 + 2 + strlen(message) + 1 ));
+      resend_msg = malloc( 1 + 4 + 2 + strlen(message) + 1 );
       if( resend_msg == NULL)
         err(1,"malloc");
       err_no = sprintf( resend_msg, "<%d> %s", client_no, message);
