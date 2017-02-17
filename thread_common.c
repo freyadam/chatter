@@ -41,25 +41,14 @@ int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
   int i;
   char * client_name = malloc(50);
   
-  close(  (*fds)[client_no].fd  );
-  
-  for( i = 2; i < *fds_size; i++){
-    if( i != client_no ){
-      sprintf(client_name, "User %d left the room.", client_no);
-      send_message( (*fds)[i].fd, client_name);
-    }
-  }
-
-  for( i = client_no+1; i < *fds_size; i++){
-    (*fds)[i-1] = (*fds)[i];
-  }
-    
+  sprintf(client_name, "User %d left the room.", client_no);
+  send_message_to_all(*fds, *fds_size, client_no, client_name);
 
   (*fds_size)--;
 
   *fds = realloc(*fds, sizeof(struct pollfd) * (*fds_size));
   if( *fds == NULL)
-    err(1, "realloc");
+    err(1, "realloc");  
 
   free(client_name);
 
