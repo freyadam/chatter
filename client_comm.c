@@ -6,11 +6,9 @@
 
 void init_hints( struct addrinfo * hints_ptr){
 
-  struct addrinfo hints = *hints_ptr;
-
-  bzero(&hints, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
+  bzero(hints_ptr, sizeof(*hints_ptr));
+  hints_ptr->ai_family = AF_UNSPEC;
+  hints_ptr->ai_socktype = SOCK_STREAM;
 
 }
 
@@ -25,7 +23,7 @@ int get_connected_socket(char * server_address, int server_port){
   sprintf( server_port_string, "%d", server_port);
 
   if ( getaddrinfo(server_address, server_port_string, &hints, &result) != 0)
-    err(1,"getaddrinfo");
+    errx(1,"getaddrinfo");
   
   for( addr_info = result; addr_info != NULL; addr_info = addr_info->ai_next){
 

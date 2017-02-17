@@ -2,8 +2,8 @@
 
 CLIENT_SRC=client.c client_comm.c proto.c thread_common.c
 SERVER_SRC=server.c accept.c comm.c menu.c proto.c signal.c thread_common.c
-C_FLAGS=-Wall
-LD_FLAGS=-pthread
+CFLAGS=-Wall
+LDFLAGS=-pthread
 CC=gcc
 OBJ=$(SRC:.c=.o)
 
@@ -11,10 +11,10 @@ OBJ=$(SRC:.c=.o)
 all: bin/client bin/server
 
 bin/client: $(CLIENT_SRC:.c=.o)
-	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 bin/server: $(SERVER_SRC:.c=.o)
-	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 %.o : %.c
-	$(CC) $(C_FLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $^
