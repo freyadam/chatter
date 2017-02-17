@@ -4,6 +4,9 @@
 #include "proto.h"
 #include "thread_common.h"
 
+static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name);
+static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no);
+
 void * run_menu_thread( void * arg_struct ){
 
   struct new_thread_args * args = (struct new_thread_args *) arg_struct;

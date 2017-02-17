@@ -1,9 +1,9 @@
 #include "system_headers.h"
 #include "proto.h"
 #include "accept.h"
-#include "menu.h"
-#include "comm.h"
 #include "signal.h"
+#include "comm.h"
+#include "menu.h"
 
 struct thread_data * thread_list;
 pthread_mutex_t thr_list_mx;

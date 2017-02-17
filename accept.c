@@ -2,12 +2,22 @@
 
 #include "system_headers.h"
 #include "accept.h"
-#include "comm.h"
 #include "proto.h"
 
 void accept_signal_handler(int sig){
 
   pthread_exit(NULL);
+
+}
+
+void init_hints( struct addrinfo * hints_ptr){
+
+  struct addrinfo hints = *hints_ptr;
+
+  bzero(&hints, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
 
 }
 
@@ -18,10 +28,7 @@ int get_listening_socket(int server_port){
   char * server_port_string = malloc( 5 );
   struct addrinfo hints, * result, * addr_info;
     
-  bzero(&hints, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
+  init_hints(&hints);
 
   sprintf( server_port_string, "%d", server_port);
 
@@ -61,13 +68,26 @@ int get_listening_socket(int server_port){
 
 }
 
+void accept_thread_cycle(int fd){
 
-void * run_accept_thread(void * arg){
-
-  int fd, client_fd, server_port;
+  int client_fd;
   char * client_fd_str;
-  server_port = *((int * )arg);
-  free(arg);
+
+  client_fd = accept(fd, NULL, 0);    
+    
+  // authentication
+
+  // send username and file descriptor of newly accepted client to the menu thread
+  send_message((*thread_list).comm_fd, "Placeholder");
+
+  client_fd_str = malloc( 6 );
+  sprintf(client_fd_str, "%d", client_fd); 
+  send_message((*thread_list).comm_fd, client_fd_str);
+  free(client_fd_str);
+
+}
+
+void set_signal_action(){
 
   //change signal mask to let SIGUSR1 through
   // set signal mask
@@ -85,21 +105,21 @@ void * run_accept_thread(void * arg){
   if( sigaction(SIGUSR1, &act, NULL) == -1)
     err(1, "sigaction");
 
+}
+
+void * run_accept_thread(void * arg){
+
+  int fd, server_port;
+  server_port = *((int * )arg);
+  free(arg);
+
+  set_signal_action();
+
   fd = get_listening_socket(server_port);
 
   while(true){
 
-    client_fd = accept(fd, NULL, 0);    
-    
-    // authentication
-
-    // send username and file descriptor of newly accepted client to the appropriate thread
-    send_message((*thread_list).comm_fd, "Placeholder");
-
-    client_fd_str = malloc( 6 );
-    sprintf(client_fd_str, "%d", client_fd); 
-    send_message((*thread_list).comm_fd, client_fd_str);
-    free(client_fd_str);
+    accept_thread_cycle(fd);
     
   }
 
