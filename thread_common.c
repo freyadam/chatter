@@ -38,7 +38,6 @@ int transfer_client(int room_fd, struct pollfd ** fds, int * fds_size, int clien
 
 int delete_client(struct pollfd ** fds, int * fds_size, int client_no){
 
-  int i;
   char * client_name = malloc(50);
   
   sprintf(client_name, "User %d left the room.", client_no);
