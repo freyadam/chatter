@@ -12,12 +12,10 @@ void accept_signal_handler(int sig){
 
 void init_hints( struct addrinfo * hints_ptr){
 
-  struct addrinfo hints = *hints_ptr;
-
-  bzero(&hints, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = AI_PASSIVE;
+  bzero(hints_ptr, sizeof(*hints_ptr));
+  hints_ptr->ai_family = AF_UNSPEC;
+  hints_ptr->ai_socktype = SOCK_STREAM;
+  hints_ptr->ai_flags = AI_PASSIVE;
 
 }
 

@@ -6,11 +6,9 @@
 
 void init_hints( struct addrinfo * hints_ptr){
 
-  struct addrinfo hints = *hints_ptr;
-
-  bzero(&hints, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
+  bzero(hints_ptr, sizeof(*hints_ptr));
+  hints_ptr->ai_family = AF_UNSPEC;
+  hints_ptr->ai_socktype = SOCK_STREAM;
 
 }
 
