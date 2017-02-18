@@ -7,7 +7,7 @@
 static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name);
 static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no);
 
-static void poll_cycle( struct pollfd ** fds_ptr, int * fds_size_ptr, char * room_name ){
+void poll_cycle( struct pollfd ** fds_ptr, int * fds_size_ptr, char * room_name ){
 
   int err_poll, client_no;
   struct pollfd * fds = *fds_ptr;

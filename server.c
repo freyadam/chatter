@@ -33,9 +33,8 @@ void run_server(int server_port){
   //create menu thread
   create_menu_thread();
 
-  // create communication threads
-  create_comm_thread("Room 1");
-  create_comm_thread("Room 2");
+  // create communication thread
+  create_comm_thread("Prototype");
 
   run_signal_thread(accept_thread);
 
