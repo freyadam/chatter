@@ -60,21 +60,21 @@ void * lines_to_pipe(void * arg){
     line = NULL;
     line_size = 0;
 
-    read = getline(&line, &line_size, stdin);    
+    while( (read = getline(&line, &line_size, stdin)) != 0 ){
     
-    if( read == -1)
-      err(1,"getline");
-    if( read == 0){
-      close(*pipe);
-    }
+      if( read == -1)
+        err(1,"getline");
   
-    wr_read = write(*pipe, line, read);
-    if( wr_read == -1)
-      err(1,"write");
-    if( wr_read != read){
-      close(*pipe);
-      break;
+      wr_read = write(*pipe, line, read);
+      if( wr_read == -1)
+        err(1,"write");
+      if( wr_read != read){
+        err(1,"write");
+      }
+
     }
+
+    close(*pipe);
 
     free(line);
  

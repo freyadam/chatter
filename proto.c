@@ -130,7 +130,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
     if ( err_arg != msg_length+1) {
       return -1;
     }
-    else if ( (*message_ptr)[err_arg-1] != DELIMITER){
+    else if ( (*message_ptr)[msg_length] != DELIMITER){
       return -1;
     }
 
@@ -172,12 +172,6 @@ int send_message(int fd, char * message){
   free(dispatch);
 
   return result;
-}
-
-int send_message_from_file(int fd, char * file_path){
-
-  return 0;
-
 }
 
 int send_command(int fd, char * cmd){
@@ -239,4 +233,48 @@ int send_message_to_all(struct pollfd * fds, int fds_size, int exception, char *
   }
 
   return EXIT_SUCCESS;
+}
+
+
+int send_message_from_file(int fd, char * file_path){
+
+  int fildes = open(file_path, O_RDONLY, 0666);
+    
+  // get file length
+  int length_of_file = (int)lseek(fildes, 0, SEEK_END);
+  if( length_of_file == -1 )
+    err(1,"lseek");
+  if( lseek(fildes, 0, SEEK_SET) == -1 ) // set file offset to start again
+    err(1,"lseek");
+
+  // write header
+  char * prefix = malloc( strlen("MSG") + strlen(" ") + 10 + strlen(" "));
+  sprintf(prefix, "MSG %d ", length_of_file);
+  send_dispatch(fd, prefix);
+  free(prefix);
+
+  // write contents of file
+  int buffer_size, rd;
+  buffer_size = 2000;
+  char * buffer = malloc( buffer_size + 1);
+
+  while( (rd = read(fildes, buffer, buffer_size)) > 0 ){
+    
+    buffer[rd] = '\0';
+    if( send_dispatch(fd, buffer) != EXIT_SUCCESS)
+      errx(1, "send_dispatch -- send_message_from_file");
+
+  }
+
+  if( rd == -1 )
+    err(1,"read");
+
+  free(buffer);
+
+  // finish message
+  if( send_dispatch(fd, " ") != EXIT_SUCCESS)
+    errx(1, "send_dispatch -- send_message_from_file");
+
+  return EXIT_SUCCESS;
+
 }
