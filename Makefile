@@ -11,9 +11,11 @@ OBJ=$(SRC:.c=.o)
 all: bin/client bin/server
 
 bin/client: $(CLIENT_SRC:.c=.o)
+	mkdir -p bin
 	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
 
 bin/server: $(SERVER_SRC:.c=.o)
+	mkdir -p bin
 	$(CC) $(C_FLAGS) $(LD_FLAGS) -o $@ $^
 
 %.o : %.c

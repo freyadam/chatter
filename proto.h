@@ -14,5 +14,6 @@ int send_exit(int fd);
 int send_end(int fd);
 int send_end_to_all(struct pollfd * fds, int fds_size);
 int send_message_to_all(struct pollfd * fds, int fds_size, int exception, char * message);
+int send_message_from_file(int fd, char * file_path);
 
 #endif // PROTO_H_

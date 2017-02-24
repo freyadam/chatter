@@ -10,33 +10,31 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 void poll_cycle( struct pollfd ** fds_ptr, int * fds_size_ptr, char * room_name ){
 
   int err_poll, client_no;
-  struct pollfd * fds = *fds_ptr;
-  int fds_size = *fds_size_ptr;
 
-  if( (err_poll = poll( fds,fds_size, -1)) < 0)
+  if( (err_poll = poll( (*fds_ptr),(*fds_size_ptr), -1)) < 0)
     errx(1,"poll");
     
   // priority channel
-  if( fds[0].revents & POLLIN ){
+  if( (*fds_ptr)[0].revents & POLLIN ){
 
-    process_priority_request( fds, fds_size, room_name );
+    process_priority_request( (*fds_ptr), (*fds_size_ptr), room_name );
 
   }      
 
   // communication between threads
-  if( fds[1].revents & POLLIN){
+  if( (*fds_ptr)[1].revents & POLLIN){
 
-    process_comm_request(&fds, &fds_size, room_name);
+    process_comm_request( fds_ptr, fds_size_ptr, room_name);
 
   }    
     
   // client threads
-  for( client_no = 2; client_no < fds_size; client_no++){      
+  for( client_no = 2; client_no < (*fds_size_ptr); client_no++){      
 
-    if( fds[client_no].revents & POLLIN ){
+    if( (*fds_ptr)[client_no].revents & POLLIN ){
       
         
-      process_client_request(&fds, &fds_size, client_no);
+      process_client_request( fds_ptr, fds_size_ptr, client_no);
 
     }
 

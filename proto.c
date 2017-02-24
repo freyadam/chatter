@@ -174,6 +174,12 @@ int send_message(int fd, char * message){
   return result;
 }
 
+int send_message_from_file(int fd, char * file_path){
+
+  return 0;
+
+}
+
 int send_command(int fd, char * cmd){
 
   char * dispatch = malloc( (3 + 1 + strlen(cmd) + 1 + 1));
