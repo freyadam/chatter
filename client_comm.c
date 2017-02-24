@@ -122,7 +122,7 @@ void poll_cycle( struct pollfd ** fds_ptr){
 
       if( result == EOF_IN_STREAM ){
         printf("End of transmission\n");            
-        return;
+        exit(0);
       } else if( result == EXIT_FAILURE )
         errx(1, "process_server_request");
 
