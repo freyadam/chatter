@@ -25,8 +25,11 @@ struct room_str {
   struct room_str * next;
 };
 
+pthread_mutex_t users_mx;
 struct user_pass * users;
+
 struct command_str * commands;
+
 struct room_str * rooms;
 
 #endif //USERS_HEADER_H_

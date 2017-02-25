@@ -2,7 +2,7 @@
 #include "system_headers.h"
 #include "users.h"
 
-int load_users_from_file(char * filename){
+int load_users_from_file_aux(char * filename){
 
   FILE * file = fopen(filename, "r");
   if( file == NULL )
@@ -81,7 +81,18 @@ int load_users_from_file(char * filename){
   return 0;
 }
 
-void list_users(){
+int load_users_from_file(char * filename){
+  pthread_mutex_lock(&users_mx);
+
+  int result = load_users_from_file_aux(filename);
+
+  pthread_mutex_unlock(&users_mx);
+
+  return result;
+}
+
+
+void list_users_aux(){
 
   struct user_pass * user = users;
   while( user != NULL ){
@@ -91,7 +102,15 @@ void list_users(){
 
 }
 
-int insert_user(char * users_file, char * username, char * passwd){
+void list_users(){
+  pthread_mutex_lock(&users_mx);
+
+  list_users_aux();  
+
+  pthread_mutex_unlock(&users_mx);
+}
+
+int insert_user_aux(char * users_file, char * username, char * passwd){
 
   // check if the username is already taken 
   struct user_pass * user = users;
@@ -103,26 +122,7 @@ int insert_user(char * users_file, char * username, char * passwd){
     user = user->next;
   }  
   
-  // add new user to list
-  if( users == NULL ){
-    users = (struct user_pass *) malloc( sizeof(struct user_pass) );
-    users->username = username;
-    users->passwd = passwd;
-    users->next = NULL;
-  } else {
-    
-    user = users;
-    while( user->next != NULL ){ user = user->next; }
-    
-    struct user_pass * new_user = (struct user_pass *) malloc( sizeof(struct user_pass) );
-    new_user->username = username;
-    new_user->passwd = passwd;
-    new_user->next = NULL;
-
-    user->next = new_user;
-  }
-
-  // add new user to file as well
+  // add new user to file
   int user_fd;
   if( (user_fd = open(users_file, O_WRONLY | O_APPEND, 0666)) == -1 )
     err(1,"open -- user file");
@@ -134,10 +134,23 @@ int insert_user(char * users_file, char * username, char * passwd){
 
   close(user_fd);
 
+  // reload list
+  load_users_from_file(users_file);
+
   return true;
 }
 
-int user_present(char * username, char * passwd){
+int insert_user(char * users_file, char * username, char * passwd){
+    pthread_mutex_lock(&users_mx);
+
+    int result = insert_user_aux(users_file, username, passwd);
+
+    pthread_mutex_unlock(&users_mx);
+
+    return result;
+}
+
+int user_present_aux(char * username, char * passwd){
 
   struct user_pass * user = users;
   while( user != NULL ){
@@ -153,7 +166,17 @@ int user_present(char * username, char * passwd){
   return false;
 }
 
-int username_present(char * username, char * passwd){
+int user_present(char * username, char * passwd){
+  pthread_mutex_lock(&users_mx);
+
+  int result = user_present_aux(username, passwd);
+
+  pthread_mutex_unlock(&users_mx);
+
+  return result;
+}
+
+int username_present_aux(char * username, char * passwd){
 
   struct user_pass * user = users;
   while( user != NULL ){
@@ -166,6 +189,16 @@ int username_present(char * username, char * passwd){
   }
 
   return false;
+}
+
+int username_present(char * username, char * passwd){
+  pthread_mutex_lock(&users_mx);
+
+  int result = username_present_aux(username, passwd);
+
+  pthread_mutex_unlock(&users_mx);
+
+  return result;
 }
 
 /*
