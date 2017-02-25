@@ -41,12 +41,14 @@ int main(int argc, char *argv[])
     printf("Not present\n");
   */
 
+  /*
   load_commands("commands");
   list_commands();
   printf("Cmd %s\n", get_command("ls"));
 
   if( get_command("a") == NULL )
     printf("None!\n");
+  */
 
   return 0;
 }
