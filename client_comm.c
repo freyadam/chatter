@@ -233,7 +233,7 @@ int process_client_request(int server_fd, int line_fd){
 
     if( NULL != strstr(cmd_argument(line), " ")){
       printf("Commands cannot contain spaces\n");
-      return EXIT_FAILURE;
+      return EXIT_SUCCESS;
     }
         
     return send_command(server_fd, cmd_argument(line));
