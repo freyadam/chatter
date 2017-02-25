@@ -257,8 +257,6 @@ void create_comm_thread(char * name){
 
   thr_data->next = NULL;
 
-  printf("Initialized\n");
-
   // ----- APPEND TO LIST -----
 
   // get pointer to the last element of thread_list
@@ -276,8 +274,6 @@ void create_comm_thread(char * name){
 
   if( pthread_mutex_unlock(&thr_list_mx) != 0)
     errx(1, "pthread_mutex_unlock");
-
-  printf("Appended\n");
 
   // ----- START NEW THREAD -----
   
