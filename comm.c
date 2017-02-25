@@ -3,6 +3,7 @@
 #include "comm.h"
 #include "proto.h"
 #include "thread_common.h"
+#include "commands.h"
 
 static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name);
 static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no);
@@ -147,9 +148,16 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 
     } else if( strcmp(prefix, "CMD" ) == 0){
 
+      printf("%s\n", message);
+
       // perform cmd
-      send_message(client_fd, "CMD: This function is currently disabled.");          
-          
+      char * cmd = get_command(message);
+      if( cmd == NULL ){
+        send_message(client_fd, "Command not found.");
+      } else {
+        perform_command(client_fd, cmd, "placeholder");
+      }
+
     } else if( strcmp(prefix, "MSG" ) == 0){
                 
       // send message to all the other clients

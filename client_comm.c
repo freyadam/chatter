@@ -204,7 +204,7 @@ int process_server_request(int fd){
           
   } else if( strcmp(prefix, "MSG" ) == 0){
           
-    // print message
+    // print message    
     printf("%s\n", message);
     
   }

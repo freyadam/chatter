@@ -5,6 +5,7 @@
 #include "comm.h"
 #include "menu.h"
 #include "rooms.h"
+#include "commands.h"
 
 struct thread_data * thread_list;
 pthread_mutex_t thr_list_mx;
@@ -34,6 +35,10 @@ void run_server(int server_port){
 
   // load rooms from file 'rooms'
   load_rooms("rooms");
+
+  // load commands
+  load_commands("commands");
+  list_commands();
 
   pthread_t accept_thread = create_accept_thread(server_port);
   run_signal_thread(accept_thread);
