@@ -4,6 +4,7 @@
 #include "signal.h"
 #include "comm.h"
 #include "menu.h"
+#include "rooms.h"
 
 struct thread_data * thread_list;
 pthread_mutex_t thr_list_mx;
@@ -28,14 +29,13 @@ void run_server(int server_port){
 
   block_signals();  
 
-  pthread_t accept_thread = create_accept_thread(server_port);
-
   //create menu thread
   create_menu_thread();
 
-  // create communication thread
-  create_comm_thread("Prototype");
+  // load rooms from file 'rooms'
+  load_rooms("rooms");
 
+  pthread_t accept_thread = create_accept_thread(server_port);
   run_signal_thread(accept_thread);
 
   if( pthread_mutex_destroy( &thr_list_mx ) != 0 )

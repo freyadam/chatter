@@ -78,6 +78,8 @@ int load_users_from_file_aux(char * filename){
   if( errno != 0 )
     err(1,"getline");
 
+  free(line);
+
   return 0;
 }
 
