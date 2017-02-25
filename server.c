@@ -6,6 +6,7 @@
 #include "menu.h"
 #include "rooms.h"
 #include "commands.h"
+#include "users.h"
 
 struct thread_data * thread_list;
 pthread_mutex_t thr_list_mx;
@@ -23,10 +24,26 @@ void block_signals(){
 
 }
 
+void initiate_mutexes(){
+
+  pthread_mutexattr_t mx_attr;
+  if( pthread_mutexattr_init(&mx_attr) != 0)
+    err(1,"pthread_mutexattr_init");
+  if( pthread_mutexattr_settype(&mx_attr, PTHREAD_MUTEX_RECURSIVE) != 0)
+    err(1,"pthread_mutexattr_settype");
+
+  if( pthread_mutex_init( &thr_list_mx, &mx_attr) != 0 )
+    errx(1, "pthread_mutex_init");
+  if( pthread_mutex_init( &commands_mx, &mx_attr) != 0 )
+    errx(1, "pthread_mutex_init");
+  if( pthread_mutex_init(&users_mx, &mx_attr) != 0)
+    err(1,"pthread_mutex_init");
+
+}
+
 void run_server(int server_port){
 
-  if( pthread_mutex_init( &thr_list_mx, NULL) != 0 )
-    errx(1, "pthread_mutex_init");
+  initiate_mutexes();
 
   block_signals();  
 
