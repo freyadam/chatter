@@ -14,22 +14,7 @@ struct user_pass {
   struct user_pass * next;
 };
 
-struct command_str {
-  char * name;
-  char * command;
-  struct command_str * next;
-};
-
-struct room_str {
-  char * room_name;
-  struct room_str * next;
-};
-
 pthread_mutex_t users_mx;
 struct user_pass * users;
-
-struct command_str * commands;
-
-struct room_str * rooms;
 
 #endif //USERS_HEADER_H_

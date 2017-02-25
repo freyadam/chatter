@@ -2,12 +2,15 @@
 #include "system_headers.h"
 #include "users.h"
 #include "rooms.h"
+#include "commands.h"
 
 int main(int argc, char *argv[])
 {
 
+  /*
   users = NULL;
   char * user_file = "users";
+
 
   pthread_mutexattr_t mx_attr;
   if( pthread_mutexattr_init(&mx_attr) != 0)
@@ -36,7 +39,15 @@ int main(int argc, char *argv[])
     printf("Ok\n");
   else
     printf("Not present\n");
+  */
 
-    return 0;
+  load_commands("commands");
+  list_commands();
+  printf("Cmd %s\n", get_command("ls"));
+
+  if( get_command("a") == NULL )
+    printf("None!\n");
+
+  return 0;
 }
 
