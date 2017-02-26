@@ -25,10 +25,10 @@ Server can be executed by running command `./bin/server <port>` where port means
 
 - `-u file` File with a list of username/password pairs. Each line holds a single pair and they are delimited by a space. Neither username nor password can contain any other spaces. `#` on the beginning of a line marks a comment and such a line is ignored.
 
-- `-r file` Address of a file in which a list of rooms to be run is defined. Each chatroom name is on its own line. Again lines beginning with `#` are ignored.
+- `-r file` Address of a file in which a list of rooms to be run is defined. Each chatroom name is on its own line. Again, lines beginning with `#` are ignored.
 
 ### Running client ###
 
-Client can be executed by a command `./bin/client <address> <port>` where both address and port belong to server that the client connects to. Both IPv4 and IPv6 addresses are supported. Port of a client is picked automatically.
+Client can be executed by a command `./bin/client <address> <port>` where both address and port belong to server that the client connects to. Both IPv4 and IPv6 addresses are supported. Port of a client is selected automatically.
 
 ### Client usage ###
