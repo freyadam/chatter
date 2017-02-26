@@ -51,10 +51,14 @@ void run_server(int server_port){
   create_menu_thread();
 
   // load rooms from file 'rooms'
-  load_rooms("rooms");
+  load_rooms(room_file);
 
+  // load users
+  load_users_from_file(user_file);
+  
   // load commands
-  load_commands("commands");
+  printf("Commands:\n");
+  load_commands(cmd_file);
   list_commands();
 
   pthread_t accept_thread = create_accept_thread(server_port);
@@ -133,8 +137,8 @@ int main(int argc, char *argv[])
   */
 
   // ----- RUN -----
-  run_server(server_port);
-  
+  run_server(server_port);    
+
   return EXIT_SUCCESS;
 }
 

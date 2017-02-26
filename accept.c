@@ -3,6 +3,7 @@
 #include "system_headers.h"
 #include "accept.h"
 #include "proto.h"
+#include "users.h"
 
 void accept_signal_handler(int sig){
 
@@ -74,9 +75,34 @@ void accept_thread_cycle(int fd){
   client_fd = accept(fd, NULL, 0);    
     
   // authentication
+  send_message(client_fd, "Username:");
+
+  char * username = NULL;
+  if( get_message(client_fd, &username) != EXIT_SUCCESS ){
+    close(client_fd);
+    return;
+  }
+  
+  send_message(client_fd, "Password:");
+  
+  char * password = NULL;
+  if( get_message(client_fd, &password) != EXIT_SUCCESS ){
+    close(client_fd);
+    return;
+  }
+
+  if( !user_present(username, password) ){
+      send_message(client_fd, "Wrong username or password");
+      close(client_fd);
+      return;
+  }
+
+  send_message(client_fd, "Connected.");
+  
+  free(password);
 
   // send username and file descriptor of newly accepted client to the menu thread
-  send_message((*thread_list).comm_fd, "Placeholder");
+  send_message((*thread_list).comm_fd, username);
 
   client_fd_str = malloc( 6 );
   sprintf(client_fd_str, "%d", client_fd); 

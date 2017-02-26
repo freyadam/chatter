@@ -98,7 +98,7 @@ void list_users_aux(){
 
   struct user_pass * user = users;
   while( user != NULL ){
-    printf("User: %s Pass: %s\n", user->username, user->passwd);
+    printf("User: %s Pass: '%s'\n", user->username, user->passwd);
     user = user->next;
   }
 
