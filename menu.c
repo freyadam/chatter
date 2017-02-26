@@ -123,21 +123,9 @@ void create_menu_thread(){
 }
 
 
-int add_client_to_menu(struct pollfd ** fds_ptr, char *** names, int * fds_size, char * username, int fd){
+void print_info_to_new_client(int fd){
 
   char * name = malloc(100);
-
-  *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
-  if(*fds_ptr == NULL)
-    err(1,"realloc");
-
-  *names = (char **) realloc(*names, sizeof(char *) * ((*fds_size)+1) );
-  if(*names == NULL)
-    err(1,"realloc");
-
-  init_pollfd_record(fds_ptr, *fds_size, fd);
-
-  (*names)[*fds_size] = username;
 
   // send chatroom info to new user
   sprintf( name, "----- Connected to Menu -----");
@@ -165,6 +153,28 @@ int add_client_to_menu(struct pollfd ** fds_ptr, char *** names, int * fds_size,
   
   // how to pick your setting
   send_message(fd, "To select your option simply type its associated number or letter.");
+
+  free(name);
+
+}
+
+int add_client_to_menu(struct pollfd ** fds_ptr, char *** names, int * fds_size, char * username, int fd){
+
+  char * name = malloc(100);
+
+  *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
+  if(*fds_ptr == NULL)
+    err(1,"realloc");
+
+  *names = (char **) realloc(*names, sizeof(char *) * ((*fds_size)+1) );
+  if(*names == NULL)
+    err(1,"realloc");
+
+  init_pollfd_record(fds_ptr, *fds_size, fd);
+
+  (*names)[*fds_size] = username;
+
+  print_info_to_new_client(fd);
 
   free(name);
 
@@ -278,6 +288,8 @@ static void process_client_request(struct pollfd ** fds, char *** names, int * f
           insert_room(room_file, new_room_name);
           send_message(client_fd, "Added new room");
         }
+
+        print_info_to_new_client(client_fd);
 
       } else { // enter chat room
         
