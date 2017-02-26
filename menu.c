@@ -271,13 +271,33 @@ static void process_client_request(struct pollfd ** fds, char *** names, int * f
                 
       if( strcmp(message, "u" ) == 0){
 
-        send_message(client_fd, 
-                     "Creating new user is not implemented yet.");  
+        // send_message(client_fd, 
+        //             "Creating new user is not implemented yet.");  
+
+        char * username, * passwd;
+        username = NULL; passwd = NULL;
+        
+        send_message(client_fd, "User's name:");
+
+        if( get_message(client_fd, &username) == EXIT_SUCCESS ){
+         
+          send_message(client_fd, "User's password:");
+
+          if( get_message(client_fd, &passwd) == EXIT_SUCCESS ){
+            
+            if( insert_user(user_file, username, passwd) == true )
+              send_message(client_fd, "User added.");
+            else
+              send_message(client_fd, "Failed to add new user");
+
+          } else 
+            send_message(client_fd, "Failed to add new user");
+        
+        } else 
+          send_message(client_fd, "Failed to add new user");
 
       } else if( strcmp(message, "c" ) == 0){
 
-        //send_message(client_fd, 
-        //             "Creating new chatroom is not implemented yet.");          
         send_message(client_fd, "New room's name:");
         
         char * new_room_name = NULL;        

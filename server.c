@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
   int server_port = 4444;
 
   room_file = "rooms";
+  user_file = "users";
 
   run_server(server_port);
   

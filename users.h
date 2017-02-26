@@ -14,6 +14,7 @@ struct user_pass {
   struct user_pass * next;
 };
 
+char * user_file;
 pthread_mutex_t users_mx;
 struct user_pass * users;
 
