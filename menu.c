@@ -4,8 +4,8 @@
 #include "proto.h"
 #include "thread_common.h"
 
-static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name);
-static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no);
+static void process_comm_request(struct pollfd ** fds, char *** names, int * fds_size, char * room_name);
+static void process_client_request(struct pollfd ** fds, char *** names, int * fds_size, int client_no);
 
 void * run_menu_thread( void * arg_struct ){
 
@@ -19,13 +19,16 @@ void * run_menu_thread( void * arg_struct ){
   
   int fds_size = 2; // priority channel + thread communication channel
   struct pollfd * fds = malloc( sizeof(struct pollfd) * fds_size); 
-      
+  char ** names = malloc( sizeof(char *) * fds_size);
+
   // initialize pollfd for priority channel
   init_pollfd_record( &fds, 0, priority_fd);
+  names[0] = "priority";
 
   // initialize pollfd for thread communication channel
   init_pollfd_record( &fds, 1, comm_fd);
-  
+  names[1] = "comm";
+
   int err_poll, client_no;
 
   while( true ){
@@ -43,7 +46,7 @@ void * run_menu_thread( void * arg_struct ){
     // communication between threads
     if( fds[1].revents & POLLIN){
 
-      process_comm_request(&fds, &fds_size, room_name);
+      process_comm_request(&fds, &names, &fds_size, room_name);
 
     }    
     
@@ -53,7 +56,7 @@ void * run_menu_thread( void * arg_struct ){
       if( fds[client_no].revents & POLLIN ){
       
         
-        process_client_request(&fds, &fds_size, client_no);
+        process_client_request(&fds, &names, &fds_size, client_no);
 
       }
 
@@ -87,13 +90,11 @@ void create_menu_thread(){
 
   thr_data->next = NULL;
 
-  printf("Initialized\n");
-
   // ----- APPEND TO LIST -----
 
   // get pointer to the last element of thread_list
   if( pthread_mutex_lock(&thr_list_mx) != 0)
-    errx(1, "pthread_mutex_unlock");
+    errx(1, "pthread_mutex_lock");
 
   struct thread_data * thr_ptr;
   if( thread_list == NULL ){
@@ -106,8 +107,6 @@ void create_menu_thread(){
 
   if( pthread_mutex_unlock(&thr_list_mx) != 0)
     errx(1, "pthread_mutex_unlock");
-
-  printf("Appended\n");
 
   // ----- START NEW THREAD -----
   
@@ -122,17 +121,22 @@ void create_menu_thread(){
 }
 
 
-int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
+int add_client_to_menu(struct pollfd ** fds_ptr, char *** names, int * fds_size, char * username, int fd){
 
-  // SUPPOSE THAT NAME IS SHORTER THAN 100 CHARACTERS
   char * name = malloc(100);
 
   *fds_ptr = (struct pollfd *) realloc(*fds_ptr, sizeof(struct pollfd) * ((*fds_size)+1) );
   if(*fds_ptr == NULL)
     err(1,"realloc");
 
-  init_pollfd_record( fds_ptr, *fds_size, fd);
-  
+  *names = (char **) realloc(*names, sizeof(char *) * ((*fds_size)+1) );
+  if(*names == NULL)
+    err(1,"realloc");
+
+  init_pollfd_record(fds_ptr, *fds_size, fd);
+
+  (*names)[*fds_size] = username;
+
   // send chatroom info to new user
   sprintf( name, "----- Connected to Menu -----");
   send_message(fd, name);
@@ -140,7 +144,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
   // list rooms 
   send_message(fd, "Rooms:");
 
-  // skip menu and iterate over all rooms 
+  // skip menu and then list all standard rooms 
   int counter = 1;  
   struct thread_data * thr_ptr;
   for( thr_ptr = thread_list->next; thr_ptr != NULL; thr_ptr = thr_ptr->next){
@@ -168,7 +172,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr, int * fds_size, int fd){
 
 }
 
-static void process_comm_request(struct pollfd ** fds, int * fds_size, char * room_name){
+static void process_comm_request(struct pollfd ** fds, char *** names, int * fds_size, char * room_name){
 
   int new_fd;
   char * prefix, * message, * new_username;
@@ -183,8 +187,8 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
     return;
   }
 
-  new_username = message;
-  message = NULL;
+  new_username = malloc( strlen(message) + 1);
+  strcpy(new_username, message);
       
   if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
     errx(1,"get_dispatch");
@@ -199,20 +203,20 @@ static void process_comm_request(struct pollfd ** fds, int * fds_size, char * ro
   printf("New client: %s -- %d\n", new_username, new_fd);
 
   // add the new client
-  add_client_to_menu(fds, fds_size, new_fd);
+  add_client_to_menu(fds, names, fds_size, new_username, new_fd);
 
-  free(new_username);  
+  //free(new_username);  
 
   // release allocated resources
   if( prefix != NULL)
     free(prefix); 
   if( message != NULL)
-    free(message);
+  free(message);
 
 }
 
 
-static void process_client_request(struct pollfd ** fds, int * fds_size, int client_no){
+static void process_client_request(struct pollfd ** fds, char *** names, int * fds_size, int client_no){
 
   int err_no, client_fd;
   char * prefix, * message;
@@ -244,7 +248,7 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 
       // end connection
       printf("Closing connection for client %d\n", client_no);
-      delete_client(fds, fds_size, client_no);     
+      delete_client(fds, names, fds_size, client_no);     
 
     } else if( strcmp(prefix, "CMD" ) == 0){
 
@@ -282,7 +286,7 @@ static void process_client_request(struct pollfd ** fds, int * fds_size, int cli
 
         // transfer client to the chat room
         printf("%s\n", thr_ptr->name);
-        if( transfer_client(thr_ptr->comm_fd, fds, fds_size, client_no) != EXIT_SUCCESS )
+        if( transfer_client(thr_ptr->comm_fd, fds, names, fds_size, client_no) != EXIT_SUCCESS )
           errx(1, "transfer_client");
 
       }
