@@ -19,6 +19,16 @@ Both binaries are stored in `bin` directory as `server` and `client` respectivel
 
 ### Running server ###
 
+Server can be executed by running command `./bin/server <port>` where port means the number of the listening port of the new server. Also there are several optional parameters that the user can define. 
+
+- `-c file` Specify the file in which commands that can be performed by client are stored. By default it is `./commands`. Each command is defined on a single line in a format `name_of_command command_itself`. Name and actual command are delimited by a space but other spaces are part of the command. Lines that start with `#` are ignored.
+
+- `-u file` File with a list of username/password pairs. Each line holds a single pair and they are delimited by a space. Neither username nor password can contain any other spaces. `#` on the beginning of a line marks a comment and such a line is ignored.
+
+- `-r file` Address of a file in which a list of rooms to be run is defined. Each chatroom name is on its own line. Again lines beginning with `#` are ignored.
+
 ### Running client ###
+
+Client can be executed by a command `./bin/client <address> <port>` where both address and port belong to server that the client connects to. Both IPv4 and IPv6 addresses are supported. Port of a client is picked automatically.
 
 ### Client usage ###
