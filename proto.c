@@ -17,13 +17,15 @@
 // get next delimited part of text without the delimititer (which will be consumed)
 int get_delim(int fd, char ** line_ptr, char del){
 
-  free(*line_ptr);
+  if( (*line_ptr) != NULL) 
+    free(*line_ptr);
 
   int position, line_len, err_read;
   line_len = 10;
   position = 0;
   char * line = malloc( line_len );
   char c;
+
   while( (err_read = read(fd, &c, 1)) == 1 ){
 
     if( position >= line_len - 1){
@@ -111,19 +113,24 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
   } else if( strcmp(prefix, "MSG") == 0){ // MESSAGE
 
     // get length of message
-    int err_arg = get_delim(fd, message_ptr, DELIMITER);
+    int err_arg = get_delim(fd, message_ptr, DELIMITER);    
+
     if ( err_arg == -1){
       return -1;
     }
     else if ( err_arg == 0)
       return EOF_IN_STREAM;
     
+
     int msg_length = atoi(*message_ptr);
 
     free(*message_ptr);
+
     *message_ptr = malloc( msg_length+1 );
     if( message_ptr == NULL )
       err(1,"malloc");
+
+
 
     // get the actual message
     err_arg = read(fd, *message_ptr, msg_length+1);
@@ -147,6 +154,27 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
   }
 
   return EXIT_SUCCESS;
+}
+
+int get_message(int fd, char ** contents_ptr){
+
+  if( *contents_ptr != NULL ){
+    free( *contents_ptr );
+  }
+
+  *contents_ptr = NULL;
+  char * prefix = NULL;
+  
+  int err = get_dispatch(fd, &prefix, contents_ptr);
+
+  if( err == -1 || err == EOF_IN_STREAM )
+    return err;
+
+  if( strcmp(prefix, "MSG") != 0 )
+    return -1;
+
+  return EXIT_SUCCESS;
+
 }
 
 int send_dispatch(int fd, char * dispatch){

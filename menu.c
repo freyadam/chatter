@@ -3,6 +3,8 @@
 #include "menu.h"
 #include "proto.h"
 #include "thread_common.h"
+#include "rooms.h"
+#include "users.h"
 
 static void process_comm_request(struct pollfd ** fds, char *** names, int * fds_size, char * room_name);
 static void process_client_request(struct pollfd ** fds, char *** names, int * fds_size, int client_no);
@@ -259,11 +261,23 @@ static void process_client_request(struct pollfd ** fds, char *** names, int * f
                 
       if( strcmp(message, "u" ) == 0){
 
-        send_message(client_fd, "Creating new user is not implemented yet.");          
+        send_message(client_fd, 
+                     "Creating new user is not implemented yet.");  
 
       } else if( strcmp(message, "c" ) == 0){
 
-        send_message(client_fd, "Creating new chatroom is not implemented yet.");          
+        //send_message(client_fd, 
+        //             "Creating new chatroom is not implemented yet.");          
+        send_message(client_fd, "New room's name:");
+        
+        char * new_room_name = NULL;        
+        
+        if( get_message(client_fd, &new_room_name) != EXIT_SUCCESS )
+          send_message(client_fd, "Failed to add new room");
+        else {          
+          insert_room(room_file, new_room_name);
+          send_message(client_fd, "Added new room");
+        }
 
       } else { // enter chat room
         

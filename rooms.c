@@ -127,7 +127,7 @@ int insert_room(char * filename, char * name){
 
   pthread_mutex_lock(&thr_list_mx);
 
-  int result = insert_room(filename, name);
+  int result = insert_room_aux(filename, name);
 
   pthread_mutex_unlock(&thr_list_mx);
 

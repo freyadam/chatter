@@ -9,4 +9,6 @@ int insert_room(char * filename, char * name);
 
 pthread_mutex_t rooms_mx;
 
+char * room_file;
+
 #endif // ROOMS_HEADER_H_

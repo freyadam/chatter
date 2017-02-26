@@ -126,6 +126,8 @@ int main(int argc, char *argv[])
   thread_list = NULL;
   int server_port = 4444;
 
+  room_file = "rooms";
+
   run_server(server_port);
   
   return EXIT_SUCCESS;
