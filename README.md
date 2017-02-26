@@ -17,7 +17,7 @@ Alternatively you can build only server by running `make server` for server bina
 
 Both binaries are stored in `bin` directory as `server` and `client` respectively.
 
-### Running server ### 
+### Running server ###
 
 ### Running client ###
 
