@@ -15,6 +15,7 @@ struct command_str {
 
 struct command_str * commands;
 pthread_mutex_t commands_mx;
+char * cmd_file;
 
 #endif // COMMANDS_HEADER_H_
 

@@ -65,50 +65,60 @@ void run_server(int server_port){
 
 }
 
-void print_server_settings(int server_port, char * command_list, char * user_list){
+void print_server_settings(int server_port){
   
   printf("PORT: %d\n", server_port);
-  if( command_list != NULL )
-    printf("CMD: %s\n", command_list);
-  if( user_list != NULL )
-    printf("USER: %s\n", user_list);
+  printf("CMD: %s\n", cmd_file);
+  printf("USER: %s\n", user_file);
+  printf("ROOM: %s\n", room_file);
 
 }
 
 int main(int argc, char *argv[])
-{
-  
+{  
+
+  // ----- INIT -----
+  thread_list = NULL;
+  int server_port = 4444;
+
+  // default
+  room_file = "./rooms";
+  user_file = "./users";
+  cmd_file = "./commands";
 
   /*
-  int opt, server_port;
-  char * command_list, * user_list, * port_arg;    
-  command_list = "./commands"; // default
-  user_list = "./users"; // default
+  int opt;
 
   // ----- GET OPTIONS -----
-  while((opt = getopt(argc, argv, "c:u:")) != -1)
+  while((opt = getopt(argc, argv, "c:u:r:")) != -1)
     switch(opt) {
     case 'c': 
-      command_list = malloc( (strlen(optarg) + 1) );
-      if( command_list == NULL )
-        errx(1, "command_list malloc");
-      strcpy(command_list, optarg); break;
+      cmd_file = malloc( (strlen(optarg) + 1) );
+      if( cmd_file == NULL )
+        errx(1, "cmd_file malloc");
+      strcpy(cmd_file, optarg); break;
     case 'u':
-      user_list = malloc( (strlen(optarg) + 1) );
-      if( user_list == NULL )
-        errx(1, "user_list malloc");
-      strcpy(user_list, optarg); break;
+      user_file = malloc( (strlen(optarg) + 1) );
+      if( user_file == NULL )
+        errx(1, "user_file malloc");
+      strcpy(user_file, optarg); break;
+    case 'r':
+      room_file = malloc( (strlen(optarg) + 1) );
+      if( room_file == NULL )
+        errx(1, "room_file malloc");
+      strcpy(room_file, optarg); break;
     case '?': 
       fprintf(stderr,
-              "Usage: %s [-c command_list] [-u user_list] <port_number> \n",
+              "Usage: %s [-c command_list] [-u user_list] [-r room_list] <port_number> \n",
               basename(argv[0]));
       exit(1);
     }
-  port_arg = argv[optind];
+
+  char * port_arg = argv[optind];
 
   if( port_arg == NULL ){
      fprintf(stderr,
-             "Usage: %s [-c command_list] [-u user_list] <port_number> \n",
+             "Usage: %s [-c command_list] [-u user_list] [-r room_list] <port_number> \n",
              basename(argv[0]));
      exit(1);
    }
@@ -118,17 +128,11 @@ int main(int argc, char *argv[])
     errx(1, "Port number has to be bigger than 1024.");
 
   // ----- PRINT SETTINGS -----
-  print_server_settings(server_port, command_list, user_list);
+  print_server_settings(server_port);
 
   */
 
-  // ----- INIT -----
-  thread_list = NULL;
-  int server_port = 4444;
-
-  room_file = "rooms";
-  user_file = "users";
-
+  // ----- RUN -----
   run_server(server_port);
   
   return EXIT_SUCCESS;
