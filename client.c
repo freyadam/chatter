@@ -11,10 +11,8 @@ int main(int argc, char *argv[])
   int server_port = 4444;
   char * username, * password;
   
-  /*
-  int server_port, username_len, password_len;
+  int username_len, password_len;
   size_t buffer_size;
-  char *server_address, *username, *password;
   struct termios old_flags, new_flags;
 
   if( argc != 3)
@@ -33,7 +31,7 @@ int main(int argc, char *argv[])
   printf("Enter your username: ");
   if( ( username_len = getline(&username, &buffer_size, stdin)) == -1)
     err(1, "getline");
-  username[username_len-1] = 0;
+  username[strlen(username)-1] = '\0';
   
   tcgetattr(0, &old_flags);
   new_flags = old_flags;
@@ -46,6 +44,7 @@ int main(int argc, char *argv[])
   printf("Enter your password: ");
   if( ( password_len = getline(&password, &buffer_size, stdin) == -1))
     err(1, "getline");
+  password[strlen(password)-1] = '\0';
 
   tcsetattr(0, TCSANOW, &old_flags);    
 
@@ -53,10 +52,7 @@ int main(int argc, char *argv[])
   printf("Port: %d\n", server_port);
   printf("Username: %s\n", username);  
   printf("Password: %s\n", password);  
-  */
-  
-  username = "a"; password = "k";
-  
+    
   return run_client(server_address, server_port, username, password);
 
 }
