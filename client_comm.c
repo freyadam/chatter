@@ -140,12 +140,16 @@ void poll_cycle( struct pollfd ** fds_ptr){
 
 }
 
-int run_client(char * server_address, int server_port){
+int run_client(char * server_address, int server_port, char * username, char * password){
 
   pthread_t get_line_thread;
   int line_pipe[2];
 
   int server_fd = get_connected_socket(server_address, server_port);  
+
+  // send auth info
+  send_message(server_fd, username);
+  send_message(server_fd, password);
 
   if( pipe(line_pipe) == -1)
     err(1, "pipe");

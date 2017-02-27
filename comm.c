@@ -94,9 +94,11 @@ static void process_comm_request(struct pollfd ** fds, char *** names, int * fds
   if( get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
     errx(1,"get_dispatch");
 
-  if( strcmp(prefix, "MSG") == 0)
-    new_fd = atoi(message);
-  else
+  if( strcmp(prefix, "MSG") == 0){
+    new_fd = strtol(message, NULL, 10);
+    if( new_fd == 0 && errno == EINVAL )
+      err(1, "strtol");
+  } else
     errx(1,"new_client");
 
   printf("New client: %s -- its fd: %d\n", new_username, new_fd);  

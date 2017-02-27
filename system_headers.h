@@ -2,7 +2,7 @@
 #define SYSTEM_HEADERS_H_
 
 #include <stdio.h>
-#include <err.h>
+//#include <err.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -20,6 +20,10 @@
 #include <fcntl.h>
 
 #define DELIMITER ' '
+
+// replace functions err and errx from err.h with their approximation
+void err(int code, char * err_str);
+void errx(int code, char * err_str);
 
 struct thread_data {
   pthread_t id;

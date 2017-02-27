@@ -1,8 +1,8 @@
 
 
-CLIENT_SRC=client.c client_comm.c proto.c thread_common.c
-SERVER_SRC=server.c accept.c comm.c menu.c proto.c signal.c thread_common.c users.c rooms.c commands.c
-TEST_SRC=test.c accept.c comm.c menu.c proto.c signal.c thread_common.c users.c rooms.c commands.c
+CLIENT_SRC=client.c client_comm.c proto.c thread_common.c err.c
+SERVER_SRC=server.c accept.c comm.c menu.c proto.c signal.c thread_common.c users.c rooms.c commands.c err.c
+TEST_SRC=test.c accept.c comm.c menu.c proto.c signal.c thread_common.c users.c rooms.c commands.c err.c
 C_FLAGS=-Wall
 LD_FLAGS=-pthread
 CC=gcc

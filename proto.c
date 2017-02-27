@@ -122,15 +122,15 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
       return EOF_IN_STREAM;
     
 
-    int msg_length = atoi(*message_ptr);
+    int msg_length = strtol(*message_ptr, NULL, 10);
+    if( msg_length == 0 && errno == EINVAL )
+      err(1, "strtol");
 
     free(*message_ptr);
 
     *message_ptr = malloc( msg_length+1 );
     if( message_ptr == NULL )
       err(1,"malloc");
-
-
 
     // get the actual message
     err_arg = read(fd, *message_ptr, msg_length+1);

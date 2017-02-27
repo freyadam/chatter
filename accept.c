@@ -75,16 +75,11 @@ void accept_thread_cycle(int fd){
   client_fd = accept(fd, NULL, 0);    
     
   // authentication
-  send_message(client_fd, "Username:");
-
   char * username = NULL;
   if( get_message(client_fd, &username) != EXIT_SUCCESS ){
     close(client_fd);
     return;
   }
-  
-  send_message(client_fd, "Password:");
-  
   char * password = NULL;
   if( get_message(client_fd, &password) != EXIT_SUCCESS ){
     close(client_fd);

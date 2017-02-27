@@ -89,8 +89,9 @@ int main(int argc, char *argv[])
   room_file = "./rooms";
   user_file = "./users";
   cmd_file = "./commands";
-
+  
   /*
+
   int opt;
 
   // ----- GET OPTIONS -----
@@ -125,16 +126,20 @@ int main(int argc, char *argv[])
              "Usage: %s [-c command_list] [-u user_list] [-r room_list] <port_number> \n",
              basename(argv[0]));
      exit(1);
-   }
+  }
    
-  server_port = atoi(port_arg);  
+  server_port = strtol(port_arg, NULL, 10);
+  if( server_port == 0 && errno == EINVAL )
+    err(1, "strtol");
   if( server_port <= 1024 )
     errx(1, "Port number has to be bigger than 1024.");
+
+  */
 
   // ----- PRINT SETTINGS -----
   print_server_settings(server_port);
 
-  */
+  
 
   // ----- RUN -----
   run_server(server_port);    

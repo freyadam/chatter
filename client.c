@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
   
   char * server_address = "127.0.0.1";
   int server_port = 4444;
+  char * username, * password;
   
   /*
   int server_port, username_len, password_len;
@@ -21,7 +22,9 @@ int main(int argc, char *argv[])
   
   server_address = argv[1];
 
-  server_port = atoi(argv[2]);  
+  server_port = strtol(argv[2], NULL, 10);
+  if( server_port == 0 && errno == EINVAL )
+     err(1, "strtol");
   if( server_port <= 1024 )
     errx(1, "Port number has to be bigger than 1024.");
 
@@ -43,8 +46,7 @@ int main(int argc, char *argv[])
   if( ( password_len = getline(&password, &buffer_size, stdin) == -1))
     err(1, "getline");
 
-  tcsetattr(0, TCSANOW, &old_flags);  
-  
+  tcsetattr(0, TCSANOW, &old_flags);    
 
   printf("Address: %s\n", server_address);
   printf("Port: %d\n", server_port);
@@ -52,8 +54,8 @@ int main(int argc, char *argv[])
   printf("Password: %s\n", password);  
   */
   
-  username = "HAL";
+  username = "a"; password = "k";
   
-  return run_client(server_address, server_port);
+  return run_client(server_address, server_port, username, password);
 
 }
