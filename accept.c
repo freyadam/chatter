@@ -4,7 +4,7 @@
 #include "proto.h"
 #include "users.h"
 
-void accept_signal_handler(int sig){
+void accept_signal_handler( int sig){
 
   pthread_exit(NULL);
 
@@ -12,7 +12,7 @@ void accept_signal_handler(int sig){
 
 void init_hints( struct addrinfo * hints_ptr){
 
-  bzero(hints_ptr, sizeof(*hints_ptr));
+  bzero(hints_ptr, sizeof( *hints_ptr));
   hints_ptr->ai_family = AF_UNSPEC;
   hints_ptr->ai_socktype = SOCK_STREAM;
   hints_ptr->ai_flags = AI_PASSIVE;
@@ -20,31 +20,31 @@ void init_hints( struct addrinfo * hints_ptr){
 }
 
 // return file descriptor on which the server is already listening (on port server_port)
-int get_listening_socket(int server_port){
+int get_listening_socket( int server_port){
 
   int fd, yes = 1;  
   char * server_port_string = malloc( 5 );
   struct addrinfo hints, * result, * addr_info;
     
-  init_hints(&hints);
+  init_hints( &hints);
 
   sprintf( server_port_string, "%d", server_port);
 
-  if ( getaddrinfo(NULL, server_port_string, &hints, &result) != 0)
-    err(1,"getaddrinfo");
+  if ( getaddrinfo( NULL, server_port_string, &hints, &result) != 0)
+    err( 1,"getaddrinfo");
 
   for( addr_info = result; addr_info != NULL; addr_info = addr_info->ai_next){
 
-    if ( (fd = socket(addr_info->ai_family, addr_info->ai_socktype, addr_info->ai_protocol)) == -1)
+    if ( ( fd = socket(addr_info->ai_family, addr_info->ai_socktype, addr_info->ai_protocol)) == -1)
       continue;
     
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                   sizeof(int)) == -1) 
-      err(1, "setsockopt");
+    if ( setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                   sizeof( int)) == -1) 
+      err( 1, "setsockopt");
     
 
-    if( bind(fd, addr_info->ai_addr, addr_info->ai_addrlen) == -1 ){
-      close(fd);
+    if( bind( fd, addr_info->ai_addr, addr_info->ai_addrlen) == -1 ){
+      close( fd);
       continue;
     }
     
@@ -52,46 +52,46 @@ int get_listening_socket(int server_port){
 
   }
 
-  freeaddrinfo(result);
+  freeaddrinfo( result);
 
   if( addr_info == NULL )
-    err(1, "no valid gettaddrinfo result");
+    err( 1, "no valid gettaddrinfo result");
 
-  if( listen(fd, SOMAXCONN) == -1)
-    err(1, "listen");
+  if( listen( fd, SOMAXCONN) == -1)
+    err( 1, "listen");
 
-  free(server_port_string);
+  free( server_port_string);
 
   return fd;
 
 }
 
-void accept_thread_cycle(int fd){
+void accept_thread_cycle( int fd){
 
   int client_fd;
   char * client_fd_str;
 
-  client_fd = accept(fd, NULL, 0);    
+  client_fd = accept( fd, NULL, 0);    
     
   // authentication
   char * username = NULL;
-  if( get_message(client_fd, &username) != EXIT_SUCCESS ){
-    close(client_fd);
+  if( get_message( client_fd, &username) != EXIT_SUCCESS ){
+    close( client_fd);
     return;
   }
   char * password = NULL;
-  if( get_message(client_fd, &password) != EXIT_SUCCESS ){
-    close(client_fd);
+  if( get_message( client_fd, &password) != EXIT_SUCCESS ){
+    close( client_fd);
     return;
   }
 
-  if( !user_present(username, password) ){
-      send_message(client_fd, "Wrong username or password");
-      close(client_fd);
+  if( !user_present( username, password) ){
+      send_message( client_fd, "Wrong username or password");
+      close( client_fd);
       return;
   }
 
-  send_message(client_fd, "Connected.");
+  send_message( client_fd, "Connected.");
   
   free(password);
 
@@ -120,7 +120,7 @@ void set_signal_action(){
   act.sa_handler = &accept_signal_handler;
   sigemptyset(&act.sa_mask);
   act.sa_flags = 0;
-  if( sigaction(SIGUSR1, &act, NULL) == -1)
+  if( sigaction( SIGUSR1, &act, NULL) == -1)
     err(1, "sigaction");
 
 }
@@ -144,7 +144,7 @@ void * run_accept_thread(void * arg){
   return NULL;
 }
 
-pthread_t  create_accept_thread(int server_port){
+pthread_t  create_accept_thread( int server_port){
 
   pthread_t accept_thread;
 
@@ -152,7 +152,7 @@ pthread_t  create_accept_thread(int server_port){
   *port_ptr = server_port;
   pthread_create( &accept_thread, NULL, &run_accept_thread, (void *)port_ptr);
 
-  return accept_thread;
+  return(accept_thread);
 }
 
 
