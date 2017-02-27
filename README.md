@@ -29,8 +29,8 @@ Server can be executed by running command `./bin/server <port>` where port means
 
 ### Running client ###
 
-Client can be executed by a command `./bin/client <address> <port>` where both address and port belong to server that the client connects to. Both IPv4 and IPv6 addresses are supported. Port of a client is selected automatically.
+Client can be executed by a command `./bin/client <address> <port>` where both address and port belong to server that the client connects to. Port of a client is selected automatically. Both IPv4 and IPv6 addresses are supported.
 
 ### Client usage ###
 
-User controls the interaction simply by writing on command line and confirming his actions by pressing Enter. That means that each line represents a single message for the client. Some lines have special meaning. For example `/end` closes the connection and client while `/cmd rest_of_line` tries to perform a command on server.
+User controls the interaction simply by writing on command line and confirming his actions by pressing Enter. That means that each line represents a single message for the server. Some lines have special meaning. For example `/end` closes the connection and client while `/cmd rest_of_line` tries to perform a command on server.
