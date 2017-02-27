@@ -1,4 +1,5 @@
-#include "system_headers.h"
+
+#include "common.h"
 #include "proto.h"
 #include "accept.h"
 #include "signal.h"
