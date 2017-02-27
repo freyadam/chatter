@@ -159,11 +159,6 @@ int user_present_aux(char * username, char * passwd){
   struct user_pass * user = users;
   while( user != NULL ){
     
-    printf("%s -> '%s'\n", user->username, user->passwd);
-    printf("%d -- %d \n",
-           strcmp(user->username, username),
-           strcmp(user->passwd, passwd));
-
     if( strcmp(user->username, username) == 0 &&
         strcmp(user->passwd, passwd) == 0 )
       return true;

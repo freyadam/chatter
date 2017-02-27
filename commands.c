@@ -150,7 +150,7 @@ int perform_command(int fd, char * cmd, char * room_name){
 
   pthread_mutex_lock(&commands_mx);
 
-  int result = perform_command(fd, cmd, room_name);
+  int result = perform_command_aux(fd, cmd, room_name);
 
   pthread_mutex_unlock(&commands_mx);
 
@@ -176,7 +176,7 @@ char * get_command(char * cmd_name){
 
   pthread_mutex_lock(&commands_mx);
 
-  char * result = get_command(cmd_name);
+  char * result = get_command_aux(cmd_name);
 
   pthread_mutex_unlock(&commands_mx);
 

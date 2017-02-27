@@ -48,6 +48,9 @@ void run_server(int server_port){
 
   block_signals();  
 
+  //create menu thread
+  create_menu_thread();
+
   // load rooms from file 'rooms'
   load_rooms(room_file);
 
@@ -59,9 +62,6 @@ void run_server(int server_port){
   printf("Commands:\n");
   load_commands(cmd_file);
   list_commands();
-
-  //create menu thread
-  create_menu_thread();
 
   pthread_t accept_thread = create_accept_thread(server_port);
   run_signal_thread(accept_thread);
