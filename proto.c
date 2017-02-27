@@ -191,8 +191,9 @@ int send_message(int fd, char * message){
   
   char * dispatch = malloc(3 + 1 + MAX_MSG_LEN_SIZE + 1 + strlen(message) + 1 + 1);
 
-  int result = sprintf(dispatch, "MSG %d %s ", (int)strlen(message), message);
-  if( result < 0)
+  int msg_len = 3 + 1 + 10 + 1 + strlen(message) + 2;
+  int result = snprintf(dispatch, msg_len, "MSG %d %s ", (int)strlen(message), message);
+  if( result < 0 || result > msg_len)
     return EXIT_FAILURE;
 
   result = send_dispatch(fd, dispatch);  
@@ -206,8 +207,9 @@ int send_command(int fd, char * cmd){
 
   char * dispatch = malloc( (3 + 1 + strlen(cmd) + 1 + 1));
   
-  int result = sprintf(dispatch, "CMD %s ", cmd);
-  if( result < 0)
+  int cmd_len = 3 + 1 + strlen(cmd) + 2;
+  int result = snprintf(dispatch, strlen("CMD %s ") + strlen(cmd) + 1, "CMD %s ", cmd);
+  if( result < 0 || result > cmd_len)
     return EXIT_FAILURE;
 
   result = send_dispatch(fd, dispatch);
@@ -277,7 +279,7 @@ int send_message_from_file(int fd, char * file_path){
 
   // write header
   char * prefix = malloc( strlen("MSG") + strlen(" ") + 10 + strlen(" "));
-  sprintf(prefix, "MSG %d ", length_of_file);
+  snprintf(prefix, 3 + 1 + 10 + 2, "MSG %d ", length_of_file);
   send_dispatch(fd, prefix);
   free(prefix);
 

@@ -20,7 +20,7 @@ int get_connected_socket(char * server_address, int server_port){
 
   init_hints(&hints);
 
-  sprintf( server_port_string, "%d", server_port);
+  snprintf( server_port_string, 8, "%d", server_port);
 
   if ( getaddrinfo(server_address, server_port_string, &hints, &result) != 0)
     err(1,"getaddrinfo");

@@ -125,11 +125,12 @@ void list_commands(){
 int perform_command_aux(int fd, char * cmd, char * room_name){
 
   char * temp = malloc( strlen("/tmp/") + 6 + strlen(room_name) + 1);
-  sprintf(temp, "/tmp/%d_%s", getpid(), room_name);
+  snprintf(temp, 5 + 5 + 1 + strlen(room_name) + 1, "/tmp/%d_%s", getpid(), room_name);
 
   // combination of pid and room name is unique  
   char * arg = malloc( strlen(cmd) + 3 + strlen(temp) + 1);
-  sprintf(arg, "%s > %s", cmd, temp);  
+  snprintf(arg, strlen(cmd) + 3 + strlen(temp) + 1,
+		   "%s > %s", cmd, temp);  
 
   if( system(arg) == -1)
     send_message(fd, "Error: command failed");

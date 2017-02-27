@@ -128,8 +128,7 @@ void print_info_to_new_client(int fd){
   char * name = malloc(100);
 
   // send chatroom info to new user
-  sprintf( name, "----- Connected to Menu -----");
-  send_message(fd, name);
+  send_message(fd, "----- Connected to Menu -----");
 
   // list rooms 
   send_message(fd, "Rooms:");
@@ -138,18 +137,16 @@ void print_info_to_new_client(int fd){
   int counter = 1;  
   struct thread_data * thr_ptr;
   for( thr_ptr = thread_list->next; thr_ptr != NULL; thr_ptr = thr_ptr->next){
-    sprintf(name, "%d - %s", counter++, thr_ptr->name);
+	  snprintf(name, 10 + 3 + strlen(thr_ptr->name) + 1, "%d - %s", counter++, thr_ptr->name);
     send_message(fd, name);
   }
 
   // list options
   send_message(fd, "Options:");
 
-  sprintf(name, "u - Create new user");
-  send_message(fd, name);
+  send_message(fd, "u - Create new user");
 
-  sprintf(name, "c - Create new chatroom");
-  send_message(fd, name);
+  send_message(fd, "c - Create new chatroom");
   
   // how to pick your setting
   send_message(fd, "To select your option simply type its associated number or letter.");

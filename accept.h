@@ -1,6 +1,6 @@
 
 #ifndef ACCEPT_HEADER_H_
-#define ACCEPT_HEADER_H_
+#define	ACCEPT_HEADER_H_
 
 int get_listening_socket(int server_port);
 void * run_accept_thread(void * arg);

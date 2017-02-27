@@ -1,8 +1,8 @@
 
-#include "common. h"
-#include "accept. h"
-#include "proto. h"
-#include "users. h"
+#include "common.h"
+#include "accept.h"
+#include "proto.h"
+#include "users.h"
 
 void accept_signal_handler(int sig) {
 
@@ -29,7 +29,7 @@ int get_listening_socket(int server_port) {
 
 	init_hints(&hints);
 
-	sprintf(server_port_string,  "%d",  server_port);
+	snprintf(server_port_string, 10 + 1,  "%d",  server_port);
 
 	if (getaddrinfo(NULL,
 					server_port_string,
@@ -106,7 +106,7 @@ void accept_thread_cycle(int fd) {
 	send_message((*thread_list). comm_fd,  username);
 
 	client_fd_str = malloc(6);
-	sprintf(client_fd_str,  "%d",  client_fd);
+	snprintf(client_fd_str,  10 + 1, "%d",  client_fd);
 	send_message((*thread_list). comm_fd,  client_fd_str);
 	free(client_fd_str);
 
