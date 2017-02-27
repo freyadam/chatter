@@ -90,9 +90,7 @@ int main(int argc, char *argv[])
   // default
   room_file = "./rooms";
   user_file = "./users";
-  cmd_file = "./commands";
-  
-  /*
+  cmd_file = "./commands";    
 
   int opt;
 
@@ -135,9 +133,7 @@ int main(int argc, char *argv[])
     err(1, "strtol");
   if( server_port <= 1024 )
     errx(1, "Port number has to be bigger than 1024.");
-
-  */
-
+  
   // ----- PRINT SETTINGS -----
   print_server_settings(server_port);
 
