@@ -5,8 +5,10 @@
 int load_users_from_file_aux(char * filename){
 
   FILE * file = fopen(filename, "r");
-  if( file == NULL )
-    err(1,"fopen");
+  if( file == NULL ){
+    printf("File %s could not be opened\n", filename);
+    exit(1);
+  }
 
   char * save_ptr, * username, * passwd, * line = NULL;
   size_t len = 0;  

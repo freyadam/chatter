@@ -7,8 +7,10 @@ int load_rooms_aux(char * filename){
   
   // open file
   FILE * file = fopen(filename, "r");
-  if( file == NULL )
-    err(1,"fopen");
+  if( file == NULL ){
+    printf("File %s could not be opened\n", filename);
+    exit(1);
+  }
   
   size_t len = 0;
   char * name, * line = NULL;

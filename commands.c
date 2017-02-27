@@ -7,8 +7,10 @@ int load_commands_aux(char * filename){
 
   
   FILE * file = fopen(filename, "r");
-  if( file == NULL )
-    err(1,"fopen");
+  if( file == NULL ){
+    printf("File %s could not be opened\n", filename);
+    exit(1);
+  }
 
   char * save_ptr, * cmd_name, * cmd, * line = NULL;
   size_t len = 0;  
