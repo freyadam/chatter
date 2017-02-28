@@ -2,309 +2,305 @@
 #include "common.h"
 #include "proto.h"
 
-// test snippet:
-/*
-  int fd = open("test_file", O_RDONLY);
-  char * line;
-  int err;
-  while( ( err = get_delim(fd, &line, ' ')) != -1){
-  printf("%s\n", line);
-  if( err == EOF_IN_STREAM )
-  break;
-  }
-*/
+// get next delimited part of text
+// without the delimititer (which will be consumed)
+int get_delim(int fd, char ** line_ptr, char del) {
 
-// get next delimited part of text without the delimititer (which will be consumed)
-int get_delim(int fd, char ** line_ptr, char del){
+	if ((*line_ptr) != NULL)
+		free(*line_ptr);
 
-  if( (*line_ptr) != NULL) 
-    free(*line_ptr);
+	int position, line_len, err_read;
+	line_len = 10;
+	position = 0;
+	char * line = malloc(line_len);
+	char c;
 
-  int position, line_len, err_read;
-  line_len = 10;
-  position = 0;
-  char * line = malloc( line_len );
-  char c;
+	while ((err_read = read(fd, &c, 1)) == 1) {
 
-  while( (err_read = read(fd, &c, 1)) == 1 ){
+		if (position >= line_len - 1) {
+			line_len += 10;
+			line = realloc(line, line_len);
+			if (line == NULL)
+					return (((-1)));
+		}
 
-    if( position >= line_len - 1){
-      line_len += 10;
-      line = realloc(line, line_len );
-      if( line == NULL )
-        return -1;
-    }
+		line[position++] = c;
+		if (c == del) {
+			line[position-1] = '\0';
+			break;
+		}
 
-    line[position++] = c;
-    if ( c == del ){
-      line[position-1] = '\0';
-      break;
-    }        
+	}
 
-  }
-  
-  if( err_read == -1 )
-    return -1;
+	if (err_read == -1)
+			return (((-1)));
 
-  *line_ptr = line;
+	*line_ptr = line;
 
-  if( err_read == 0 ){
-    if( position >= line_len - 1){
-      line_len += 1;
-      line = realloc(line, line_len );
-      if( line == NULL )
-        return -1;
-    }
+	if (err_read == 0) {
+		if (position >= line_len - 1) {
+			line_len += 1;
+			line = realloc(line, line_len);
+			if (line == NULL)
+					return (((-1)));
+		}
 
-    line[++position] = '\0';
-    return 0;
-  }
+		line[++position] = '\0';
+		return (((0)));
+	}
 
-  return position-1;  // don't include the null character 
+	return (((position-1)));	// don't include the null character
 }
 
-int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr){
-  
-  assert( EOF_IN_STREAM != -1);
-  assert( EOF_IN_STREAM != EXIT_SUCCESS);
+int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 
-  char * prefix = NULL;
-  ssize_t prefix_len;
+	assert(EOF_IN_STREAM != -1);
+	assert(EOF_IN_STREAM != EXIT_SUCCESS);
 
-  // get prefix
-  prefix_len = get_delim(fd, &prefix, DELIMITER);
+	char * prefix = NULL;
+	ssize_t prefix_len;
 
-  //printf("prefix_len: %d, prefix: '%s'\n", (int)prefix_len, prefix);
+	// get prefix
+	prefix_len = get_delim(fd, &prefix, DELIMITER);
 
-  if( prefix_len == 0)
-    return EOF_IN_STREAM;
-  else if( prefix_len == -1)
-    return -1;
-  else if( prefix_len != 3)
-    return -1;
+	// printf("prefix_len: %d, prefix: '%s'\n", (int)prefix_len, prefix);
 
-  if( strcmp(prefix, "ERR") == 0){ // ERROR
-    
-    *prefix_ptr = prefix;
-    *message_ptr = NULL;
+	if (prefix_len == 0)
+			return (((EOF_IN_STREAM)));
+	else if (prefix_len == -1)
+			return (((-1)));
+	else if (prefix_len != 3)
+			return (((-1)));
 
-  } else if( strcmp(prefix, "EXT") == 0){ // EXIT
+	if (strcmp(prefix, "ERR") == 0) { // ERROR
 
-    *prefix_ptr = prefix;
-    *message_ptr = NULL;
+		*prefix_ptr = prefix;
+		*message_ptr = NULL;
 
-  } else if( strcmp(prefix, "END") == 0){ // END OF TRANSMISSION
+	} else if (strcmp(prefix, "EXT") == 0) { // EXIT
 
-    *prefix_ptr = prefix;
-    *message_ptr = NULL;
-    
-  } else if( strcmp(prefix, "CMD") == 0){ // COMMAND
-    
-    // get the actual command 
-    int err_arg = get_delim(fd, message_ptr, DELIMITER);
-    if ( err_arg == -1 )
-      return -1;
-    else if ( err_arg == 0 )
-      return EOF_IN_STREAM;
-        
-    *prefix_ptr = prefix;
-    // message_ptr already set in get_delim
+		*prefix_ptr = prefix;
+		*message_ptr = NULL;
 
-  } else if( strcmp(prefix, "MSG") == 0){ // MESSAGE
+	} else if (strcmp(prefix, "END") == 0) { // END OF TRANSMISSION
 
-    // get length of message
-    int err_arg = get_delim(fd, message_ptr, DELIMITER);    
+		*prefix_ptr = prefix;
+		*message_ptr = NULL;
 
-    if ( err_arg == -1){
-      return -1;
-    }
-    else if ( err_arg == 0)
-      return EOF_IN_STREAM;
-    
+	} else if (strcmp(prefix, "CMD") == 0) { // COMMAND
 
-    int msg_length = strtol(*message_ptr, NULL, 10);
-    if( msg_length == 0 && errno == EINVAL )
-      err(1, "strtol");
+		// get the actual command
+		int err_arg = get_delim(fd, message_ptr, DELIMITER);
+		if (err_arg == -1)
+				return (((-1)));
+		else if (err_arg == 0)
+				return (((EOF_IN_STREAM)));
 
-    free(*message_ptr);
+		*prefix_ptr = prefix;
+		// message_ptr already set in get_delim
 
-    *message_ptr = malloc( msg_length+1 );
-    if( message_ptr == NULL )
-      err(1,"malloc");
+	} else if (strcmp(prefix, "MSG") == 0) { // MESSAGE
 
-    // get the actual message
-    err_arg = read(fd, *message_ptr, msg_length+1);
-    if ( err_arg != msg_length+1) {
-      return -1;
-    }
-    else if ( (*message_ptr)[msg_length] != DELIMITER){
-      return -1;
-    }
+		// get length of message
+		int err_arg = get_delim(fd, message_ptr, DELIMITER);
 
-    (*message_ptr)[msg_length] = '\0';
+		if (err_arg == -1) {
+				return (((-1)));
 
-    *prefix_ptr = prefix;
-    // message_ptr already set previously
+		} else if (err_arg == 0)
+				return (((EOF_IN_STREAM)));
 
 
-  } else { // UNKNOWN PREFIX
+		int msg_length = strtol(*message_ptr, NULL, 10);
+		if (msg_length == 0 && errno == EINVAL)
+			err(1, "strtol");
 
-    return -1;
+		free(*message_ptr);
 
-  }
+		*message_ptr = malloc(msg_length+1);
+		if (message_ptr == NULL)
+			err(1, "malloc");
 
-  return EXIT_SUCCESS;
+		// get the actual message
+		err_arg = read(fd, *message_ptr, msg_length+1);
+		if (err_arg != msg_length+1) {
+				return (((-1)));
+
+		} else if ((*message_ptr)[msg_length] != DELIMITER) {
+				return (((-1)));
+		}
+
+		(*message_ptr)[msg_length] = '\0';
+
+		*prefix_ptr = prefix;
+		// message_ptr already set previously
+
+
+	} else { // UNKNOWN PREFIX
+
+			return (((-1)));
+
+	}
+
+	return (((EXIT_SUCCESS)));
 }
 
-int get_message(int fd, char ** contents_ptr){
+int get_message(int fd, char ** contents_ptr) {
 
-  if( *contents_ptr != NULL ){
-    free( *contents_ptr );
-  }
+	if (*contents_ptr != NULL) {
+		free(*contents_ptr);
+	}
 
-  *contents_ptr = NULL;
-  char * prefix = NULL;
-  
-  int err = get_dispatch(fd, &prefix, contents_ptr);
+	*contents_ptr = NULL;
+	char * prefix = NULL;
 
-  if( err == -1 || err == EOF_IN_STREAM )
-    return err;
+	int err = get_dispatch(fd, &prefix, contents_ptr);
 
-  if( strcmp(prefix, "MSG") != 0 )
-    return -1;
+	if (err == -1 || err == EOF_IN_STREAM)
+			return (((err)));
 
-  return EXIT_SUCCESS;
+	if (strcmp(prefix, "MSG") != 0)
+			return (((-1)));
+
+	return (((EXIT_SUCCESS)));
 
 }
 
-int send_dispatch(int fd, char * dispatch){
-  
-  int result = write(fd, dispatch, strlen(dispatch));
-  
-  if( result != strlen(dispatch))
-    return EXIT_FAILURE;
-  
-  return EXIT_SUCCESS;
+int send_dispatch(int fd, char * dispatch) {
+
+	int result = write(fd, dispatch, strlen(dispatch));
+
+	if (result != strlen(dispatch))
+			return (((EXIT_FAILURE)));
+
+	return (((EXIT_SUCCESS)));
 }
 
-int send_message(int fd, char * message){
-  
-  char * dispatch = malloc(3 + 1 + MAX_MSG_LEN_SIZE + 1 + strlen(message) + 1 + 1);
+int send_message(int fd, char * message) {
 
-  int msg_len = 3 + 1 + 10 + 1 + strlen(message) + 2;
-  int result = snprintf(dispatch, msg_len, "MSG %d %s ", (int)strlen(message), message);
-  if( result < 0 || result > msg_len)
-    return EXIT_FAILURE;
+	char * dispatch = malloc(3 + 1 + MAX_MSG_LEN_SIZE
+		+ 1 + strlen(message) + 1 + 1);
 
-  result = send_dispatch(fd, dispatch);  
+	int msg_len = 3 + 1 + 10 + 1 + strlen(message) + 2;
+	int result = snprintf(dispatch, msg_len, "MSG %d %s ",
+		(int)strlen(message), message);
+	if (result < 0 || result > msg_len)
+			return (((EXIT_FAILURE)));
 
-  free(dispatch);
+	result = send_dispatch(fd, dispatch);
 
-  return result;
+	free(dispatch);
+
+	return (((result)));
 }
 
-int send_command(int fd, char * cmd){
+int send_command(int fd, char * cmd) {
 
-  char * dispatch = malloc( (3 + 1 + strlen(cmd) + 1 + 1));
-  
-  int cmd_len = 3 + 1 + strlen(cmd) + 2;
-  int result = snprintf(dispatch, strlen("CMD %s ") + strlen(cmd) + 1, "CMD %s ", cmd);
-  if( result < 0 || result > cmd_len)
-    return EXIT_FAILURE;
+	char * dispatch = malloc((3 + 1 + strlen(cmd) + 1 + 1));
 
-  result = send_dispatch(fd, dispatch);
+	int cmd_len = 3 + 1 + strlen(cmd) + 2;
+	int result = snprintf(dispatch, strlen("CMD %s ") + strlen(cmd) + 1,
+		"CMD %s ", cmd);
+	if (result < 0 || result > cmd_len)
+			return (((EXIT_FAILURE)));
 
-  free(dispatch);
+	result = send_dispatch(fd, dispatch);
 
-  return result;
+	free(dispatch);
+
+	return (((result)));
 }
 
-int send_error(int fd){
+int send_error(int fd) {
 
-  return send_dispatch(fd, "ERR ");
-
-}
-
-int send_exit(int fd){
-
-  return send_dispatch(fd, "EXT ");
+		return (((send_dispatch(fd, "ERR "))));
 
 }
 
-int send_end(int fd){
+int send_exit(int fd) {
 
-  return send_dispatch(fd, "END ");
+		return (((send_dispatch(fd, "EXT "))));
 
 }
 
-int send_end_to_all(struct pollfd * fds, int fds_size){
-  
-  int i, result;
-  for( i = 0; i < fds_size; i++ ){
+int send_end(int fd) {
 
-    result = send_end(fds[i].fd);
-    if( result == EXIT_FAILURE )
-      printf("Client %d could not receive 'end of transmission' message.\n", i);
-  }
+		return (((send_dispatch(fd, "END "))));
 
-  return EXIT_SUCCESS;
 }
 
-int send_message_to_all(struct pollfd * fds, int fds_size, int exception, char * message){
+int send_end_to_all(struct pollfd * fds, int fds_size) {
 
-  int i, result;
-  for( i = 0; i < fds_size; i++ ){
+	int i, result;
+	for (i = 0; i < fds_size; i++) {
 
-    if( i != exception ){
-      result = send_message(fds[i].fd, message);
-      if( result == EXIT_FAILURE )
-        printf("Client %d could not receive message.\n", i);
-    }
-  }
+		result = send_end(fds[i].fd);
+		if (result == EXIT_FAILURE)
+			printf(
+		"Client %d could not receive 'end of transmission' message.\n",
+		i);
+	}
 
-  return EXIT_SUCCESS;
+	return (((EXIT_SUCCESS)));
+}
+
+int send_message_to_all(struct pollfd * fds, int fds_size,
+		int exception, char * message) {
+
+	int i, result;
+	for (i = 0; i < fds_size; i++) {
+
+		if (i != exception) {
+			result = send_message(fds[i].fd, message);
+			if (result == EXIT_FAILURE)
+				printf("Client %d could not receive message.\n",
+		i);
+		}
+	}
+
+	return (((EXIT_SUCCESS)));
 }
 
 
-int send_message_from_file(int fd, char * file_path){
+int send_message_from_file(int fd, char * file_path) {
 
-  int fildes = open(file_path, O_RDONLY, 0666);
-    
-  // get file length
-  int length_of_file = (int)lseek(fildes, 0, SEEK_END);
-  if( length_of_file == -1 )
-    err(1,"lseek");
-  if( lseek(fildes, 0, SEEK_SET) == -1 ) // set file offset to start again
-    err(1,"lseek");
+	int fildes = open(file_path, O_RDONLY, 0666);
 
-  // write header
-  char * prefix = malloc( strlen("MSG") + strlen(" ") + 10 + strlen(" "));
-  snprintf(prefix, 3 + 1 + 10 + 2, "MSG %d ", length_of_file);
-  send_dispatch(fd, prefix);
-  free(prefix);
+	// get file length
+	int length_of_file = (int)lseek(fildes, 0, SEEK_END);
+	if (length_of_file == -1)
+		err(1, "lseek");
+	if (lseek(fildes, 0, SEEK_SET) == -1) // set file offset to start again
+		err(1, "lseek");
 
-  // write contents of file
-  int buffer_size, rd;
-  buffer_size = 2000;
-  char * buffer = malloc( buffer_size + 1);
+	// write header
+	char * prefix = malloc(strlen("MSG") + strlen(" ") + 10 + strlen(" "));
+	snprintf(prefix, 3 + 1 + 10 + 2, "MSG %d ", length_of_file);
+	send_dispatch(fd, prefix);
+	free(prefix);
 
-  while( (rd = read(fildes, buffer, buffer_size)) > 0 ){
-    
-    buffer[rd] = '\0';
-    if( send_dispatch(fd, buffer) != EXIT_SUCCESS)
-      errx(1, "send_dispatch -- send_message_from_file");
+	// write contents of file
+	int buffer_size, rd;
+	buffer_size = 2000;
+	char * buffer = malloc(buffer_size + 1);
 
-  }
+	while ((rd = read(fildes, buffer, buffer_size)) > 0) {
 
-  if( rd == -1 )
-    err(1,"read");
+		buffer[rd] = '\0';
+		if (send_dispatch(fd, buffer) != EXIT_SUCCESS)
+			errx(1, "send_dispatch -- send_message_from_file");
 
-  free(buffer);
+	}
 
-  // finish message
-  if( send_dispatch(fd, " ") != EXIT_SUCCESS)
-    errx(1, "send_dispatch -- send_message_from_file");
+	if (rd == -1)
+		err(1, "read");
 
-  return EXIT_SUCCESS;
+	free(buffer);
+
+	// finish message
+	if (send_dispatch(fd, " ") != EXIT_SUCCESS)
+		errx(1, "send_dispatch -- send_message_from_file");
+
+	return (((EXIT_SUCCESS)));
 
 }

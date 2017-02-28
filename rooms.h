@@ -1,6 +1,6 @@
 
 #ifndef ROOMS_HEADER_H_
-#define ROOMS_HEADER_H_
+#define	ROOMS_HEADER_H_
 
 int load_rooms(char * filename);
 void list_rooms();
