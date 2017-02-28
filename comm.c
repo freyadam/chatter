@@ -265,7 +265,7 @@ int add_client(struct pollfd ** fds_ptr, char *** names, int * fds_size,
 
 	(*fds_size)++;
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 void create_comm_thread(char * name) {

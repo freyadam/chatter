@@ -189,7 +189,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr,
 
 	(*fds_size)++;
 
-	return ((((EXIT_SUCCESS))));
+	return (EXIT_SUCCESS);
 
 }
 

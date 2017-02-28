@@ -144,5 +144,5 @@ main(int argc, char *argv[]) {
 	// ----- RUN -----
 	run_server(server_port);
 
-	return ((((EXIT_SUCCESS))));
+	return (EXIT_SUCCESS);
 }

@@ -82,7 +82,7 @@ int load_users_from_file_aux(char * filename) {
 
 	free(line);
 
-	return ((((0))));
+	return (0);
 }
 
 int load_users_from_file(char * filename) {
@@ -92,7 +92,7 @@ int load_users_from_file(char * filename) {
 
 	pthread_mutex_unlock(&users_mx);
 
-	return ((((result))));
+	return (result);
 }
 
 
@@ -121,7 +121,7 @@ int insert_user_aux(char * users_file, char * username, char * passwd) {
 	while (user != NULL) {
 
 		if (strcmp(user->username, username) == 0)
-			return ((((false))));
+			return (false);
 
 		user = user->next;
 	}
@@ -141,7 +141,7 @@ int insert_user_aux(char * users_file, char * username, char * passwd) {
 	// reload list
 	load_users_from_file(users_file);
 
-	return ((((true))));
+	return (true);
 }
 
 int insert_user(char * users_file, char * username, char * passwd) {
@@ -151,7 +151,7 @@ int insert_user(char * users_file, char * username, char * passwd) {
 
 		pthread_mutex_unlock(&users_mx);
 
-		return ((((result))));
+		return (result);
 }
 
 int user_present_aux(char * username, char * passwd) {
@@ -161,13 +161,13 @@ int user_present_aux(char * username, char * passwd) {
 
 		if (strcmp(user->username, username) == 0 &&
 				strcmp(user->passwd, passwd) == 0)
-			return ((((true))));
+			return (true);
 
 		user = user->next;
 
 	}
 
-	return ((((false))));
+	return (false);
 }
 
 int user_present(char * username, char * passwd) {
@@ -178,7 +178,7 @@ int user_present(char * username, char * passwd) {
 
 	pthread_mutex_unlock(&users_mx);
 
-	return ((((result))));
+	return (result);
 }
 
 int username_present_aux(char * username, char * passwd) {
@@ -187,13 +187,13 @@ int username_present_aux(char * username, char * passwd) {
 	while (user != NULL) {
 
 		if (strcmp(user->username, username) == 0)
-			return ((((true))));
+			return (true);
 
 		user = user->next;
 
 	}
 
-	return ((((false))));
+	return (false);
 }
 
 int username_present(char * username, char * passwd) {
@@ -203,5 +203,5 @@ int username_present(char * username, char * passwd) {
 
 	pthread_mutex_unlock(&users_mx);
 
-	return ((((result))));
+	return (result);
 }

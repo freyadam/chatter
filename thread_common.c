@@ -38,7 +38,7 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 
 	free(client_no_char);
 
-	return ((((EXIT_SUCCESS))));
+	return (EXIT_SUCCESS);
 }
 
 int delete_client(struct pollfd ** fds, char *** names,
@@ -71,7 +71,7 @@ int delete_client(struct pollfd ** fds, char *** names,
 
 	free(client_name);
 
-	return ((((EXIT_SUCCESS))));
+	return (EXIT_SUCCESS);
 }
 
 void process_priority_request(struct pollfd * fds,

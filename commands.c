@@ -86,7 +86,7 @@ int load_commands_aux(char * filename) {
 
 	free(line);
 
-	return ((((0))));
+	return (0);
 }
 
 int load_commands(char * filename) {
@@ -97,7 +97,7 @@ int load_commands(char * filename) {
 
 	pthread_mutex_unlock(&commands_mx);
 
-	return ((((result))));
+	return (result);
 
 }
 
@@ -146,7 +146,7 @@ int perform_command_aux(int fd, char * cmd, char * room_name) {
 	free(arg);
 	free(temp);
 
-	return ((((0))));
+	return (0);
 }
 
 int perform_command(int fd, char * cmd, char * room_name) {
@@ -157,7 +157,7 @@ int perform_command(int fd, char * cmd, char * room_name) {
 
 	pthread_mutex_unlock(&commands_mx);
 
-	return ((((result))));
+	return (result);
 
 }
 
@@ -167,12 +167,12 @@ char * get_command_aux(char * cmd_name) {
 	while (cmd != NULL) {
 
 		if (strcmp(cmd_name, cmd->name) == 0)
-			return ((((cmd->command))));
+			return (cmd->command);
 
 		cmd = cmd->next;
 	}
 
-	return ((((NULL))));
+	return (NULL);
 }
 
 char * get_command(char * cmd_name) {
@@ -183,6 +183,6 @@ char * get_command(char * cmd_name) {
 
 	pthread_mutex_unlock(&commands_mx);
 
-	return ((((result))));
+	return (result);
 
 }

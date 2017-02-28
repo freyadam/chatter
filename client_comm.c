@@ -48,7 +48,7 @@ int get_connected_socket(char * server_address, int server_port) {
 	if (addr_info == NULL)
 		err(1, "no valid gettaddrinfo result");
 
-	return (((fd)));
+	return (fd);
 
 }
 
@@ -84,7 +84,7 @@ void * lines_to_pipe(void * arg) {
 
 	}
 
-	return (((NULL)));
+	return (NULL);
 }
 
 void client_sigint_handler(int sig) {
@@ -179,7 +179,7 @@ int run_client(char * server_address, int server_port,
 
 	}
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 int process_server_request(int fd) {
@@ -190,9 +190,9 @@ int process_server_request(int fd) {
 	int err_dispatch = get_dispatch(fd, &prefix, &message);
 
 	if (err_dispatch == EXIT_FAILURE)
-		return (((EXIT_FAILURE)));
+		return (EXIT_FAILURE);
 	else if (err_dispatch == EOF_IN_STREAM)
-		return (((EOF_IN_STREAM)));
+		return (EOF_IN_STREAM);
 
 	if (strcmp(prefix, "ERR") == 0) {
 
@@ -204,13 +204,13 @@ int process_server_request(int fd) {
 
 	} else if (strcmp(prefix, "END") == 0) {
 
-		return (((EOF_IN_STREAM)));
+		return (EOF_IN_STREAM);
 
 	} else if (strcmp(prefix, "CMD") == 0) {
 
 		// client doesn't take commands from server
 		send_end(fd);
-		return (((EXIT_FAILURE)));
+		return (EXIT_FAILURE);
 
 	} else if (strcmp(prefix, "MSG") == 0) {
 
@@ -224,12 +224,12 @@ int process_server_request(int fd) {
 	if (message != NULL)
 		free(message);
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 
 char * cmd_argument(char * line) {
-	return (((line+5)));
+	return (line+5);
 }
 
 int process_client_request(int server_fd, int line_fd) {
@@ -243,7 +243,7 @@ int process_client_request(int server_fd, int line_fd) {
 
 		if (NULL != strstr(cmd_argument(line), " ")) {
 			printf("Commands cannot contain spaces\n");
-			return (((EXIT_SUCCESS)));
+			return (EXIT_SUCCESS);
 		}
 
 		return (((send_command(server_fd, cmd_argument(line)))));

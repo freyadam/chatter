@@ -40,7 +40,7 @@ int load_rooms_aux(char * filename) {
 
 	free(line);
 
-	return (((0)));
+	return (0);
 }
 
 int load_rooms(char * filename) {
@@ -51,7 +51,7 @@ int load_rooms(char * filename) {
 
 	pthread_mutex_unlock(&thr_list_mx);
 
-	return (((result)));
+	return (result);
 }
 
 void list_rooms_aux() {
@@ -83,12 +83,12 @@ int room_present_aux(char * name) {
 	while (thread != NULL) {
 
 		if (strcmp(name, thread->name) == 0)
-			return (((true)));
+			return (true);
 
 		thread = thread->next;
 	}
 
-	return (((false)));
+	return (false);
 }
 
 int room_present(char * name) {
@@ -99,7 +99,7 @@ int room_present(char * name) {
 
 	pthread_mutex_unlock(&thr_list_mx);
 
-	return (((result)));
+	return (result);
 
 }
 
@@ -107,7 +107,7 @@ int insert_room_aux(char * filename, char * name) {
 
 	// find if a room is already present
 	if (room_present(name))
-		return (((1)));
+		return (1);
 
 	// add room to file
 	int file_fd;
@@ -122,7 +122,7 @@ int insert_room_aux(char * filename, char * name) {
 	// add thread for list
 	create_comm_thread(name);
 
-	return (((0)));
+	return (0);
 }
 
 int insert_room(char * filename, char * name) {
@@ -133,6 +133,6 @@ int insert_room(char * filename, char * name) {
 
 	pthread_mutex_unlock(&thr_list_mx);
 
-	return (((result)));
+	return (result);
 
 }

@@ -21,7 +21,7 @@ int get_delim(int fd, char ** line_ptr, char del) {
 			line_len += 10;
 			line = realloc(line, line_len);
 			if (line == NULL)
-					return (((-1)));
+					return (-1);
 		}
 
 		line[position++] = c;
@@ -33,7 +33,7 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	}
 
 	if (err_read == -1)
-			return (((-1)));
+			return (-1);
 
 	*line_ptr = line;
 
@@ -42,14 +42,14 @@ int get_delim(int fd, char ** line_ptr, char del) {
 			line_len += 1;
 			line = realloc(line, line_len);
 			if (line == NULL)
-					return (((-1)));
+					return (-1);
 		}
 
 		line[++position] = '\0';
-		return (((0)));
+		return (0);
 	}
 
-	return (((position-1)));	// don't include the null character
+	return (position-1);	// don't include the null character
 }
 
 int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
@@ -66,11 +66,11 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 	// printf("prefix_len: %d, prefix: '%s'\n", (int)prefix_len, prefix);
 
 	if (prefix_len == 0)
-			return (((EOF_IN_STREAM)));
+			return (EOF_IN_STREAM);
 	else if (prefix_len == -1)
-			return (((-1)));
+			return (-1);
 	else if (prefix_len != 3)
-			return (((-1)));
+			return (-1);
 
 	if (strcmp(prefix, "ERR") == 0) { // ERROR
 
@@ -92,9 +92,9 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		// get the actual command
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
 		if (err_arg == -1)
-				return (((-1)));
+				return (-1);
 		else if (err_arg == 0)
-				return (((EOF_IN_STREAM)));
+				return (EOF_IN_STREAM);
 
 		*prefix_ptr = prefix;
 		// message_ptr already set in get_delim
@@ -105,10 +105,10 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
 
 		if (err_arg == -1) {
-				return (((-1)));
+				return (-1);
 
 		} else if (err_arg == 0)
-				return (((EOF_IN_STREAM)));
+				return (EOF_IN_STREAM);
 
 
 		int msg_length = strtol(*message_ptr, NULL, 10);
@@ -124,10 +124,10 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		// get the actual message
 		err_arg = read(fd, *message_ptr, msg_length+1);
 		if (err_arg != msg_length+1) {
-				return (((-1)));
+				return (-1);
 
 		} else if ((*message_ptr)[msg_length] != DELIMITER) {
-				return (((-1)));
+				return (-1);
 		}
 
 		(*message_ptr)[msg_length] = '\0';
@@ -138,11 +138,11 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 
 	} else { // UNKNOWN PREFIX
 
-			return (((-1)));
+			return (-1);
 
 	}
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 int get_message(int fd, char ** contents_ptr) {
@@ -157,12 +157,12 @@ int get_message(int fd, char ** contents_ptr) {
 	int err = get_dispatch(fd, &prefix, contents_ptr);
 
 	if (err == -1 || err == EOF_IN_STREAM)
-			return (((err)));
+			return (err);
 
 	if (strcmp(prefix, "MSG") != 0)
-			return (((-1)));
+			return (-1);
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 
 }
 
@@ -171,9 +171,9 @@ int send_dispatch(int fd, char * dispatch) {
 	int result = write(fd, dispatch, strlen(dispatch));
 
 	if (result != strlen(dispatch))
-			return (((EXIT_FAILURE)));
+			return (EXIT_FAILURE);
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 int send_message(int fd, char * message) {
@@ -185,13 +185,13 @@ int send_message(int fd, char * message) {
 	int result = snprintf(dispatch, msg_len, "MSG %d %s ",
 		(int)strlen(message), message);
 	if (result < 0 || result > msg_len)
-			return (((EXIT_FAILURE)));
+			return (EXIT_FAILURE);
 
 	result = send_dispatch(fd, dispatch);
 
 	free(dispatch);
 
-	return (((result)));
+	return (result);
 }
 
 int send_command(int fd, char * cmd) {
@@ -202,13 +202,13 @@ int send_command(int fd, char * cmd) {
 	int result = snprintf(dispatch, strlen("CMD %s ") + strlen(cmd) + 1,
 		"CMD %s ", cmd);
 	if (result < 0 || result > cmd_len)
-			return (((EXIT_FAILURE)));
+			return (EXIT_FAILURE);
 
 	result = send_dispatch(fd, dispatch);
 
 	free(dispatch);
 
-	return (((result)));
+	return (result);
 }
 
 int send_error(int fd) {
@@ -241,7 +241,7 @@ int send_end_to_all(struct pollfd * fds, int fds_size) {
 		i);
 	}
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 int send_message_to_all(struct pollfd * fds, int fds_size,
@@ -258,7 +258,7 @@ int send_message_to_all(struct pollfd * fds, int fds_size,
 		}
 	}
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 }
 
 
@@ -301,6 +301,6 @@ int send_message_from_file(int fd, char * file_path) {
 	if (send_dispatch(fd, " ") != EXIT_SUCCESS)
 		errx(1, "send_dispatch -- send_message_from_file");
 
-	return (((EXIT_SUCCESS)));
+	return (EXIT_SUCCESS);
 
 }

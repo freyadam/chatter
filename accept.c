@@ -68,7 +68,7 @@ int get_listening_socket(int server_port) {
 
 	free(server_port_string);
 
-	return (((fd)));
+	return (fd);
 
 }
 
@@ -148,7 +148,7 @@ void * run_accept_thread(void * arg) {
 
 	}
 
-	return (((NULL)));
+	return (NULL);
 }
 
 pthread_t create_accept_thread(int server_port) {
@@ -160,5 +160,5 @@ pthread_t create_accept_thread(int server_port) {
 	pthread_create(&accept_thread,
 		NULL, 	&run_accept_thread, 	(void *)port_ptr);
 
-	return (((accept_thread)));
+	return (accept_thread);
 }
