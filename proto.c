@@ -33,8 +33,8 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	}
 
 	if (err_read == -1) {
-        return (-1);
-    }
+				return (-1);
+		}
 
 	*line_ptr = line;
 
@@ -63,8 +63,6 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 
 	// get prefix
 	prefix_len = get_delim(fd, &prefix, DELIMITER);
-
-	//printf("fd: %d, prefix_len: %d, prefix: '%s'\n", fd, (int)prefix_len, prefix);
 
 	if (prefix_len == 0)
 			return (EOF_IN_STREAM);
@@ -124,12 +122,13 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		// get the actual message
 		int chars_read = 0;
 		while (chars_read != msg_length+1) {
-			err_arg = read(fd, (*message_ptr) + chars_read, msg_length+1-chars_read);
-				
-			if( err_arg == -1 ){
+			err_arg = read(fd, (*message_ptr) + chars_read,
+		msg_length+1-chars_read);
+
+			if (err_arg == -1) {
 				return (-1);
 			}
-		
+
 			chars_read += err_arg;
 		}
 

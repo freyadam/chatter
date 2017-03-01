@@ -126,18 +126,18 @@ void list_commands() {
 int perform_command_aux(int fd, char * cmd, char * room_name) {
 
 	char * temp = malloc(strlen("/tmp/") + 6 + strlen(room_name) + 1);
-    if (temp == NULL){
-        err(1,"malloc - perform_command_aux");
-    }
+		if (temp == NULL) {
+				err(1, "malloc - perform_command_aux");
+		}
 
 	snprintf(temp, 5 + 5 + 1 + strlen(room_name) + 1,
 		"/tmp/%d_%s", getpid(), room_name);
 
 	// combination of pid and room name is unique
 	char * arg = malloc(strlen(cmd) + 3 + strlen(temp) + 1);
-    if (arg == NULL){
-        err(1,"malloc - perform_command_aux");
-    }
+		if (arg == NULL) {
+				err(1, "malloc - perform_command_aux");
+		}
 
 	snprintf(arg, strlen(cmd) + 3 + strlen(temp) + 1,
 		"%s > %s", cmd, temp);
@@ -147,7 +147,7 @@ int perform_command_aux(int fd, char * cmd, char * room_name) {
 	else {
 		send_message_from_file(fd, temp);
 	}
-    
+
 	// remove temp file
 	unlink(temp);
 

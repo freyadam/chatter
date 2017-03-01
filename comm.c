@@ -134,11 +134,10 @@ static void process_client_request(struct pollfd ** fds,
 	client_fd = (*fds)[client_no].fd;
 
 	err_no = get_dispatch(client_fd, &prefix, &message);
-	if (err_no == -1){ // something went wrong
-        close(client_no);
+	if (err_no == -1) { // something went wrong
+				close(client_no);
 		errx(1, "get_dispatch");
-    }
-	else if (err_no == EOF_IN_STREAM) // EOF
+	} else if (err_no == EOF_IN_STREAM) // EOF
 
 		// end (*fds)[client_no];
 		(*fds)[client_no].events = 0;
@@ -173,7 +172,7 @@ static void process_client_request(struct pollfd ** fds,
 				send_message(client_fd, "Command not found.");
 			} else {
 				perform_command(client_fd, cmd,
-    (*names)[0]); // name of room
+		(*names)[0]); // name of room
 			}
 
 		} else if (strcmp(prefix, "MSG") == 0) {
