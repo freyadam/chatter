@@ -66,7 +66,7 @@ void * run_comm_thread(void * arg_struct) {
 
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds, 0, priority_fd);
-	names[0] = "priority";
+	names[0] = room_name;
 
 	// initialize pollfd for thread communication channel
 	init_pollfd_record(&fds, 1, comm_fd);
@@ -134,8 +134,10 @@ static void process_client_request(struct pollfd ** fds,
 	client_fd = (*fds)[client_no].fd;
 
 	err_no = get_dispatch(client_fd, &prefix, &message);
-	if (err_no == -1) // something went wrong
+	if (err_no == -1){ // something went wrong
+        close(client_no);
 		errx(1, "get_dispatch");
+    }
 	else if (err_no == EOF_IN_STREAM) // EOF
 
 		// end (*fds)[client_no];
@@ -171,7 +173,7 @@ static void process_client_request(struct pollfd ** fds,
 				send_message(client_fd, "Command not found.");
 			} else {
 				perform_command(client_fd, cmd,
-		(*names)[client_no]);
+    (*names)[0]); // name of room
 			}
 
 		} else if (strcmp(prefix, "MSG") == 0) {
@@ -209,8 +211,8 @@ void send_info_to_new_user(struct pollfd ** fds_ptr, char *** names,
 	fd = (*fds_ptr)[*fds_size].fd;
 
 	snprintf(name, strlen("----- Connected to room %s -----")
-		+ strlen(room_name) + 1,
-				"----- Connected to room %s -----", room_name);
+	+ strlen(room_name) + 1,
+	"----- Connected to room %s -----", room_name);
 	send_message(fd, name);
 	if (*fds_size > 2) {
 

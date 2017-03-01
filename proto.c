@@ -32,8 +32,9 @@ int get_delim(int fd, char ** line_ptr, char del) {
 
 	}
 
-	if (err_read == -1)
-			return (-1);
+	if (err_read == -1) {
+        return (-1);
+    }
 
 	*line_ptr = line;
 
@@ -63,7 +64,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 	// get prefix
 	prefix_len = get_delim(fd, &prefix, DELIMITER);
 
-	// printf("prefix_len: %d, prefix: '%s'\n", (int)prefix_len, prefix);
+	//printf("fd: %d, prefix_len: %d, prefix: '%s'\n", fd, (int)prefix_len, prefix);
 
 	if (prefix_len == 0)
 			return (EOF_IN_STREAM);
@@ -110,7 +111,6 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		} else if (err_arg == 0)
 				return (EOF_IN_STREAM);
 
-
 		int msg_length = strtol(*message_ptr, NULL, 10);
 		if (msg_length == 0 && errno == EINVAL)
 			err(1, "strtol");
@@ -122,11 +122,18 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 			err(1, "malloc");
 
 		// get the actual message
-		err_arg = read(fd, *message_ptr, msg_length+1);
-		if (err_arg != msg_length+1) {
+		int chars_read = 0;
+		while (chars_read != msg_length+1) {
+			err_arg = read(fd, (*message_ptr) + chars_read, msg_length+1-chars_read);
+				
+			if( err_arg == -1 ){
 				return (-1);
+			}
+		
+			chars_read += err_arg;
+		}
 
-		} else if ((*message_ptr)[msg_length] != DELIMITER) {
+		if ((*message_ptr)[msg_length] != DELIMITER) {
 				return (-1);
 		}
 
@@ -281,10 +288,10 @@ int send_message_from_file(int fd, char * file_path) {
 
 	// write contents of file
 	int buffer_size, rd;
-	buffer_size = 2000;
+	buffer_size = 100;
 	char * buffer = malloc(buffer_size + 1);
 
-	while ((rd = read(fildes, buffer, buffer_size)) > 0) {
+	while ((rd = read(fildes, buffer, buffer_size - 1)) > 0) {
 
 		buffer[rd] = '\0';
 		if (send_dispatch(fd, buffer) != EXIT_SUCCESS)

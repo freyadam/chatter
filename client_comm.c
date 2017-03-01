@@ -189,7 +189,7 @@ int process_server_request(int fd) {
 
 	int err_dispatch = get_dispatch(fd, &prefix, &message);
 
-	if (err_dispatch == EXIT_FAILURE)
+	if (err_dispatch == -1)
 		return (EXIT_FAILURE);
 	else if (err_dispatch == EOF_IN_STREAM)
 		return (EOF_IN_STREAM);
@@ -246,21 +246,21 @@ int process_client_request(int server_fd, int line_fd) {
 			return (EXIT_SUCCESS);
 		}
 
-		return (((send_command(server_fd, cmd_argument(line)))));
+		return (send_command(server_fd, cmd_argument(line)));
 
 	} else if (strcmp(line, "/end") == 0) { // line begins with "/end"
 
-		return (((send_end(server_fd))));
+		return (send_end(server_fd));
 		exit(0);
 
 	} else if (strcmp(line, "/ext") == 0) { // line begins with "/ext"
 
-		return (((send_exit(server_fd))));
+		return (send_exit(server_fd));
 		exit(0);
 
 	} else { // type of the dispatch is message
 
-		return (((send_message(server_fd, line))));
+		return (send_message(server_fd, line));
 
 	}
 
