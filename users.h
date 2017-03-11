@@ -14,8 +14,10 @@ struct user_pass {
 		struct user_pass * next;
 };
 
+typedef struct user_pass user_pass_str;
+
 char * user_file;
-pthread_mutex_t users_mx;
-struct user_pass * users;
+extern pthread_mutex_t users_mx;
+extern struct user_pass * users;
 
 #endif // USERS_HEADER_H_

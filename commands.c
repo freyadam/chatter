@@ -3,7 +3,10 @@
 #include "commands.h"
 #include "proto.h"
 
-int load_commands_aux(char * filename) {
+cmd_str * commands;
+pthread_mutex_t commands_mx;
+
+static int load_commands_aux(char * filename) {
 
 
 	FILE * file = fopen(filename, "r");
@@ -15,7 +18,7 @@ int load_commands_aux(char * filename) {
 	char * save_ptr, * cmd_name, * cmd, * line = NULL;
 	size_t len = 0;
 
-	struct command_str * new;
+	cmd_str * new;
 	while (commands != NULL) { // delete current command list
 
 		new = commands->next;
@@ -25,7 +28,7 @@ int load_commands_aux(char * filename) {
 		commands = new;
 	}
 
-	struct command_str * end_of_cmd_list = commands;
+	cmd_str * end_of_cmd_list = commands;
 
 	errno = 0;
 	while (getline(&line, &len, file) != -1) {
@@ -57,16 +60,12 @@ int load_commands_aux(char * filename) {
 
 		// copy name and actual command into their own storage places
 		char * name_storage, * cmd_storage;
-		name_storage = malloc(strlen(cmd_name) + 1);
-		cmd_storage = malloc(strlen(cmd) + 1);
-		if (name_storage == NULL || cmd_storage == NULL)
-			errx(1, "malloc");
 
-		strcpy(name_storage, cmd_name);
-		strcpy(cmd_storage, cmd);
+		cmd_storage = strdup(cmd);
+		name_storage = strdup(cmd_name);
 
-		struct command_str * new = (struct command_str *)
-		malloc(sizeof (struct command_str));
+		cmd_str * new = (cmd_str *)
+		malloc(sizeof (cmd_str));
 		new->name = name_storage;
 		new->command = cmd_storage;
 		new->next = NULL;
@@ -101,9 +100,9 @@ int load_commands(char * filename) {
 
 }
 
-void list_commands_aux() {
+static void list_commands_aux() {
 
-	struct command_str * cmd = commands;
+	cmd_str * cmd = commands;
 	while (cmd != NULL) {
 
 		printf("%s -> '%s'\n", cmd->name, cmd->command);
@@ -123,7 +122,7 @@ void list_commands() {
 
 }
 
-int perform_command_aux(int fd, char * cmd, char * room_name) {
+static int perform_command_aux(int fd, char * cmd, char * room_name) {
 
 	char * temp = malloc(strlen("/tmp/") + 6 + strlen(room_name) + 1);
 		if (temp == NULL) {
@@ -169,9 +168,9 @@ int perform_command(int fd, char * cmd, char * room_name) {
 
 }
 
-char * get_command_aux(char * cmd_name) {
+static char * get_command_aux(char * cmd_name) {
 
-	struct command_str * cmd = commands;
+	cmd_str * cmd = commands;
 	while (cmd != NULL) {
 
 		if (strcmp(cmd_name, cmd->name) == 0)

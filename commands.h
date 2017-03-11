@@ -13,8 +13,10 @@ struct command_str {
 		struct command_str * next;
 };
 
-struct command_str * commands;
-pthread_mutex_t commands_mx;
+typedef struct command_str cmd_str;
+
+extern cmd_str * commands;
+extern pthread_mutex_t commands_mx;
 char * cmd_file;
 
 #endif // COMMANDS_HEADER_H_

@@ -2,8 +2,9 @@
 #include "common.h"
 #include "comm.h"
 
+pthread_mutex_t rooms_mx;
 
-int load_rooms_aux(char * filename) {
+static int load_rooms_aux(char * filename) {
 
 	// open file
 	FILE * file = fopen(filename, "r");
@@ -25,11 +26,7 @@ int load_rooms_aux(char * filename) {
 		if (line[strlen(line)-1] == '\n')
 			line[strlen(line)-1] = '\0';
 
-		name = malloc(strlen(line) + 1);
-		if (name == NULL)
-			errx(1, "malloc");
-
-		strcpy(name, line);
+		name = strdup(line);
 
 		create_comm_thread(name);
 
@@ -54,7 +51,7 @@ int load_rooms(char * filename) {
 	return (result);
 }
 
-void list_rooms_aux() {
+static void list_rooms_aux() {
 
 	printf("Threads/Rooms:\n");
 
@@ -77,7 +74,7 @@ void list_rooms() {
 
 }
 
-int room_present_aux(char * name) {
+static int room_present_aux(char * name) {
 
 	struct thread_data * thread = thread_list;
 	while (thread != NULL) {
@@ -103,7 +100,7 @@ int room_present(char * name) {
 
 }
 
-int insert_room_aux(char * filename, char * name) {
+static int insert_room_aux(char * filename, char * name) {
 
 	// find if a room is already present
 	if (room_present(name))

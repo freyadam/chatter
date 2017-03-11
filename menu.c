@@ -209,8 +209,7 @@ static void process_comm_request(struct pollfd ** fds,
 		return;
 	}
 
-	new_username = malloc(strlen(message) + 1);
-	strcpy(new_username, message);
+	new_username = strdup(message);
 
 	if (get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
 		errx(1, "get_dispatch");

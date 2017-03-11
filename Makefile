@@ -7,7 +7,7 @@ LD_FLAGS=-pthread
 CC=gcc
 OBJ=$(SRC:.c=.o)
 
-.PHONY : all
+.PHONY: all
 all: bin/client bin/server
 
 bin/client: $(CLIENT_SRC:.c=.o)
@@ -20,3 +20,8 @@ bin/server: $(SERVER_SRC:.c=.o)
 
 %.o : %.c
 	$(CC) $(C_FLAGS) -c -o $@ $^
+
+.PHONY: clean
+clean:
+	rm -f *.o
+	rm -rf bin

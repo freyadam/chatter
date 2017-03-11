@@ -98,20 +98,14 @@ main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "c:u:r:")) != -1)
 		switch (opt) {
 		case 'c':
-			cmd_file = malloc((strlen(optarg) + 1));
-			if (cmd_file == NULL)
-				errx(1, "cmd_file malloc");
-			strcpy(cmd_file, optarg); break;
+			cmd_file = strdup(optarg); 
+                        break;
 		case 'u':
-			user_file = malloc((strlen(optarg) + 1));
-			if (user_file == NULL)
-				errx(1, "user_file malloc");
-			strcpy(user_file, optarg); break;
+			user_file = strdup(optarg); 
+                        break;
 		case 'r':
-			room_file = malloc((strlen(optarg) + 1));
-			if (room_file == NULL)
-				errx(1, "room_file malloc");
-			strcpy(room_file, optarg); break;
+			room_file = strdup(optarg); 
+                        break;
 		case '?':
 			fprintf(stderr,
 		"Usage: %s [-c command_list] [-u user_list] [-r room_list] \
