@@ -15,7 +15,7 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 		char *** names, int * fds_size, int client_no) {
 
 	int i, client_fd = (*fds)[client_no].fd;
-	char * client_no_char = malloc(25);
+	char client_no_char[10];
 
 	send_message(room_fd, (*names)[client_no]);
 	snprintf(client_no_char, 10, "%d", client_fd);
@@ -36,23 +36,20 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 	if (*names == NULL)
 		err(1, "realloc");
 
-	free(client_no_char);
-
 	return (0);
 }
 
 int delete_client(struct pollfd ** fds, char *** names,
 		int * fds_size, int client_no) {
 
-	int i;
-	char * client_name = malloc(50 + strlen((*names)[client_no]));
+        int i, client_name_str_len = 50 + strlen((*names)[client_no]);
+	char * client_name = malloc(client_name_str_len);
 
 	close((*fds)[client_no].fd);
 
 	for (i = 2; i < *fds_size; i++) {
 		if (i != client_no) {
-		snprintf(client_name, strlen("User %s left the room.")
-		+ strlen((*names)[client_no]) + 1,
+		snprintf(client_name, client_name_str_len,
 		"User %s left the room.", (*names)[client_no]);
 			send_message((*fds)[i].fd, client_name);
 		}

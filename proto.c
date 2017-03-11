@@ -211,7 +211,7 @@ int send_command(int fd, char * cmd) {
 	char * dispatch = malloc((3 + 1 + strlen(cmd) + 1 + 1));
 
 	int cmd_len = 3 + 1 + strlen(cmd) + 2;
-	int result = snprintf(dispatch, strlen("CMD %s ") + strlen(cmd) + 1,
+	int result = snprintf(dispatch, cmd_len,
 		"CMD %s ", cmd);
 	if (result < 0 || result > cmd_len)
 			return (-1);

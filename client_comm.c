@@ -12,15 +12,15 @@ void init_hints(struct addrinfo * hints_ptr) {
 
 }
 
-int get_connected_socket(char * server_address, int server_port) {
+int get_connected_socket(char * server_address, unsigned short server_port) {
 
 	int fd;
-	char * server_port_string = malloc(5);
+	char * server_port_string = malloc(6);
 	struct addrinfo hints, * result, * addr_info;
 
 	init_hints(&hints);
 
-	snprintf(server_port_string, 8, "%d", server_port);
+	snprintf(server_port_string, 6, "%d", server_port);
 
 	if (getaddrinfo(server_address, server_port_string,
 		&hints, &result) != 0)

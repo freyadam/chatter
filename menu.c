@@ -141,10 +141,16 @@ void print_info_to_new_client(int fd) {
 
 	// skip menu and then list all standard rooms
 	int counter = 1;
+        int room_str_len;
+
 	struct thread_data * thr_ptr;
 	for (thr_ptr = thread_list->next; thr_ptr != NULL;
 		thr_ptr = thr_ptr->next) {
-		snprintf(name, 10 + 3 + strlen(thr_ptr->name) + 1,
+                room_str_len = 10 + 3 + strlen(thr_ptr->name) + 1;
+
+                assert(100 > room_str_len); // make sure that room name is not too long
+
+		snprintf(name, room_str_len,
 		"%d - %s", counter++, thr_ptr->name);
 		send_message(fd, name);
 	}
@@ -167,8 +173,6 @@ void print_info_to_new_client(int fd) {
 int add_client_to_menu(struct pollfd ** fds_ptr,
 		char *** names, int * fds_size, char * username, int fd) {
 
-	char * name = malloc(100);
-
 	*fds_ptr = (struct pollfd *) realloc(*fds_ptr,
 		sizeof (struct pollfd) * ((*fds_size)+1));
 
@@ -184,8 +188,6 @@ int add_client_to_menu(struct pollfd ** fds_ptr,
 	(*names)[*fds_size] = username;
 
 	print_info_to_new_client(fd);
-
-	free(name);
 
 	(*fds_size)++;
 

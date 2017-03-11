@@ -178,11 +178,12 @@ static void process_client_request(struct pollfd ** fds,
 		} else if (strcmp(prefix, "MSG") == 0) {
 
 			// send message to all the other clients
-			resend_msg = malloc(1 + 4 + 2 + strlen(message) + 1);
+                        int resend_msg_str_len = 1 + 4 + 2 + strlen(message) + 1;
+			resend_msg = malloc(resend_msg_str_len);
 			if (resend_msg == NULL)
 				err(1, "malloc");
 			err_no = snprintf(resend_msg,
-		1 + strlen((*names)[client_no]) + 2 + strlen(message) + 1,
+                resend_msg_str_len,
 		"<%s> %s", (*names)[client_no], message);
 			for (i = 2; i < *fds_size; i++) {
 				if (i != client_no)
@@ -205,21 +206,25 @@ static void process_client_request(struct pollfd ** fds,
 void send_info_to_new_user(struct pollfd ** fds_ptr, char *** names,
 		int * fds_size, char * room_name) {
 
-	char * name = malloc(100);
+        char name[100];
 	int i, fd;
 	fd = (*fds_ptr)[*fds_size].fd;
 
-	snprintf(name, strlen("----- Connected to room %s -----")
-	+ strlen(room_name) + 1,
+        int connected_to_room_str_len = strlen("----- Connected to room %s -----")
+          + strlen(room_name) + 1;
+        assert(100 > connected_to_room_str_len); // room name is not too long 
+	snprintf(name, connected_to_room_str_len,
 	"----- Connected to room %s -----", room_name);
 	send_message(fd, name);
 	if (*fds_size > 2) {
 
 		send_message(fd, "Current users:");
 		for (i = 2; i < *fds_size; i++) {
-			snprintf(name, strlen((*names)[i]) + 1,
+                  int name_str_len = strlen((*names)[i]) + 1;
+                  assert(100 > name_str_len);
+                  snprintf(name, name_str_len,
 		"%s", (*names)[i]);
-			send_message(fd, name);
+                  send_message(fd, name);
 		}
 
 	}
@@ -228,8 +233,6 @@ void send_info_to_new_user(struct pollfd ** fds_ptr, char *** names,
 	send_message(fd, "/cmd task ... Perform task on server.");
 	send_message(fd, "/ext ... Exit to menu.");
 	send_message(fd, "/end ... End connection.");
-
-	free(name);
 
 }
 
@@ -256,10 +259,11 @@ int add_client(struct pollfd ** fds_ptr, char *** names, int * fds_size,
 
 	// send message to others as well
 	for (i = 2; i < *fds_size; i++) {
-		snprintf(name, strlen("New user connected: %s")
-		+ strlen(user_name) + 1,
-		"New user connected: %s", user_name);
-		send_message((*fds_ptr)[i].fd, name);
+          int new_user_str_len = strlen("New user connected: %s")
+            + strlen(user_name) + 1;
+          snprintf(name, new_user_str_len,
+                   "New user connected: %s", user_name);
+          send_message((*fds_ptr)[i].fd, name);
 	}
 
 	free(name);
