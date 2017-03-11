@@ -225,19 +225,19 @@ int send_command(int fd, char * cmd) {
 
 int send_error(int fd) {
 
-		return (((send_dispatch(fd, "ERR "))));
+		return (send_dispatch(fd, "ERR "));
 
 }
 
 int send_exit(int fd) {
 
-		return (((send_dispatch(fd, "EXT "))));
+		return (send_dispatch(fd, "EXT "));
 
 }
 
 int send_end(int fd) {
 
-		return (((send_dispatch(fd, "END "))));
+		return (send_dispatch(fd, "END "));
 
 }
 
@@ -286,10 +286,9 @@ int send_message_from_file(int fd, char * file_path) {
 		err(1, "lseek");
 
 	// write header
-	char * prefix = malloc(strlen("MSG") + strlen(" ") + 10 + strlen(" "));
-	snprintf(prefix, 3 + 1 + 10 + 2, "MSG %d ", length_of_file);
+	char prefix[MSG_PREFIX_LEN];
+	snprintf(prefix, MSG_PREFIX_LEN, "MSG %d ", length_of_file);
 	send_dispatch(fd, prefix);
-	free(prefix);
 
 	// write contents of file
 	int buffer_size, rd;

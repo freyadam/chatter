@@ -80,6 +80,14 @@ void print_server_settings(int server_port) {
 
 }
 
+void print_usage_and_exit(char * program_name) {
+  fprintf(stderr,
+          "Usage: %s [-c command_list] [-u user_list] [-r room_list] \
+	  <port_number> \n",
+          basename(program_name));
+  exit(1);
+}
+
 int
 main(int argc, char *argv[]) {
 
@@ -107,21 +115,16 @@ main(int argc, char *argv[]) {
 			room_file = strdup(optarg); 
                         break;
 		case '?':
-			fprintf(stderr,
-		"Usage: %s [-c command_list] [-u user_list] [-r room_list] \
-		<port_number> \n",
-		basename(argv[0]));
-		exit(1);
+                        print_usage_and_exit(argv[0]);
 		}
 
 	char * port_arg = argv[optind];
+        if (optind >= argc) {
+          exit(1);
+        }
 
 	if (port_arg == NULL) {
-		fprintf(stderr,
-		"Usage: %s [-c command_list] [-u user_list] [-r room_list] \
-		<port_number> \n",
-		basename(argv[0]));
-		exit(1);
+          print_usage_and_exit(argv[0]);
 	}
 
 	server_port = strtol(port_arg, NULL, 10);

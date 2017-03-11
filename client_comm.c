@@ -168,10 +168,10 @@ int run_client(char * server_address, int server_port,
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * 2);
 
 	// initialize pollfd for server
-	init_pollfd_record(&fds, 0, server_fd);
+        init_pollfd_record(&fds[0], server_fd);
 
 	// initialize pollfd for user-input
-	init_pollfd_record(&fds, 1, line_pipe[0]);
+	init_pollfd_record(&fds[1], line_pipe[0]);
 
 	while (true) {
 

@@ -65,11 +65,11 @@ void * run_comm_thread(void * arg_struct) {
 	char ** names = malloc(sizeof (char *) * fds_size);
 
 	// initialize pollfd for priority channel
-	init_pollfd_record(&fds, 0, priority_fd);
+	init_pollfd_record(&fds[0], priority_fd);
 	names[0] = room_name;
 
 	// initialize pollfd for thread communication channel
-	init_pollfd_record(&fds, 1, comm_fd);
+	init_pollfd_record(&fds[1], comm_fd);
 	names[1] = "comm";
 
 	while (true) {
@@ -248,7 +248,7 @@ int add_client(struct pollfd ** fds_ptr, char *** names, int * fds_size,
 	if (*names == NULL)
 		err(1, "realloc");
 
-	init_pollfd_record(fds_ptr, *fds_size, fd);
+	init_pollfd_record(fds_ptr[*fds_size], fd);
 	(*names)[*fds_size] = user_name;
 
 	// send chatroom info to new user

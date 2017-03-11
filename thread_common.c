@@ -3,11 +3,11 @@
 #include "proto.h"
 #include "thread_common.h"
 
-void init_pollfd_record(struct pollfd ** fds_ptr, int no_of_record, int fd) {
+void init_pollfd_record(struct pollfd * fd_ptr, int fd) {
 
-	(*fds_ptr)[no_of_record].fd = fd;
-	(*fds_ptr)[no_of_record].events = POLLIN;
-	(*fds_ptr)[no_of_record].revents = 0;
+	fd_ptr->fd = fd;
+	fd_ptr->events = POLLIN;
+	fd_ptr->revents = 0;
 
 }
 

@@ -4,6 +4,7 @@
 #define	EOF_IN_STREAM -2
 #define	DELIMITER ' '
 #define	MAX_MSG_LEN_SIZE 6
+#define MSG_PREFIX_LEN 17
 
 int get_delim(int fd, char ** line_ptr, char del);
 int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr);

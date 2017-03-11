@@ -2,8 +2,7 @@
 #ifndef THREAD_COMMON_H_
 #define	THREAD_COMMON_H_
 
-void init_pollfd_record(struct pollfd ** fds_ptr,
-int no_of_record, int fd);
+void init_pollfd_record(struct pollfd * fd_ptr, int fd);
 int delete_client(struct pollfd ** fds, char *** names,
 int * fds_size, int client_no);
 void process_priority_request(struct pollfd * fds,
