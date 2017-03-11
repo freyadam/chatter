@@ -81,12 +81,12 @@ void accept_thread_cycle(int fd) {
 
 	// authentication
 	char * username = NULL;
-	if (get_message(client_fd, 	&username) != EXIT_SUCCESS) {
+	if (get_message(client_fd, 	&username) != 0) {
 		close(client_fd);
 		return;
 	}
 	char * password = NULL;
-	if (get_message(client_fd, 	&password) != EXIT_SUCCESS) {
+	if (get_message(client_fd, 	&password) != 0) {
 		close(client_fd);
 		return;
 	}

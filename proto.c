@@ -56,7 +56,7 @@ int get_delim(int fd, char ** line_ptr, char del) {
 int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 
 	assert(EOF_IN_STREAM != -1);
-	assert(EOF_IN_STREAM != EXIT_SUCCESS);
+	assert(EOF_IN_STREAM != 0);
 
 	char * prefix = NULL;
 	ssize_t prefix_len;
@@ -148,7 +148,7 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 
 	}
 
-	return (EXIT_SUCCESS);
+	return (0);
 }
 
 int get_message(int fd, char ** contents_ptr) {
@@ -168,7 +168,9 @@ int get_message(int fd, char ** contents_ptr) {
 	if (strcmp(prefix, "MSG") != 0)
 			return (-1);
 
-	return (EXIT_SUCCESS);
+        free(prefix);
+
+	return (0);
 
 }
 
@@ -177,21 +179,25 @@ int send_dispatch(int fd, char * dispatch) {
 	int result = write(fd, dispatch, strlen(dispatch));
 
 	if (result != strlen(dispatch))
-			return (EXIT_FAILURE);
+			return (-1);
 
-	return (EXIT_SUCCESS);
+	return (0);
 }
 
 int send_message(int fd, char * message) {
 
-	char * dispatch = malloc(3 + 1 + MAX_MSG_LEN_SIZE
-		+ 1 + strlen(message) + 1 + 1);
+        // dispatch: 'MSG MSG_LEN MESSAGE_ITSELF \0'
+        // computation below corresponds to elements from dispatch,
+        // summed from left to right
+        int dispatch_len = 3 + 1 + MAX_MSG_LEN_SIZE
+          + 1 + strlen(message) + 1 + 1;
+	char * dispatch = malloc(dispatch_len);
 
 	int msg_len = 3 + 1 + 10 + 1 + strlen(message) + 2;
 	int result = snprintf(dispatch, msg_len, "MSG %d %s ",
 		(int)strlen(message), message);
 	if (result < 0 || result > msg_len)
-			return (EXIT_FAILURE);
+			return (-1);
 
 	result = send_dispatch(fd, dispatch);
 
@@ -208,7 +214,7 @@ int send_command(int fd, char * cmd) {
 	int result = snprintf(dispatch, strlen("CMD %s ") + strlen(cmd) + 1,
 		"CMD %s ", cmd);
 	if (result < 0 || result > cmd_len)
-			return (EXIT_FAILURE);
+			return (-1);
 
 	result = send_dispatch(fd, dispatch);
 
@@ -241,13 +247,13 @@ int send_end_to_all(struct pollfd * fds, int fds_size) {
 	for (i = 0; i < fds_size; i++) {
 
 		result = send_end(fds[i].fd);
-		if (result == EXIT_FAILURE)
+		if (result == -1)
 			printf(
 		"Client %d could not receive 'end of transmission' message.\n",
 		i);
 	}
 
-	return (EXIT_SUCCESS);
+	return (0);
 }
 
 int send_message_to_all(struct pollfd * fds, int fds_size,
@@ -258,13 +264,13 @@ int send_message_to_all(struct pollfd * fds, int fds_size,
 
 		if (i != exception) {
 			result = send_message(fds[i].fd, message);
-			if (result == EXIT_FAILURE)
+			if (result == -1)
 				printf("Client %d could not receive message.\n",
 		i);
 		}
 	}
 
-	return (EXIT_SUCCESS);
+	return (0);
 }
 
 
@@ -293,7 +299,7 @@ int send_message_from_file(int fd, char * file_path) {
 	while ((rd = read(fildes, buffer, buffer_size - 1)) > 0) {
 
 		buffer[rd] = '\0';
-		if (send_dispatch(fd, buffer) != EXIT_SUCCESS)
+		if (send_dispatch(fd, buffer) != 0)
 			errx(1, "send_dispatch -- send_message_from_file");
 
 	}
@@ -304,9 +310,9 @@ int send_message_from_file(int fd, char * file_path) {
 	free(buffer);
 
 	// finish message
-	if (send_dispatch(fd, " ") != EXIT_SUCCESS)
+	if (send_dispatch(fd, " ") != 0)
 		errx(1, "send_dispatch -- send_message_from_file");
 
-	return (EXIT_SUCCESS);
+	return (0);
 
 }

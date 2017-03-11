@@ -127,7 +127,7 @@ void poll_cycle(struct pollfd ** fds_ptr) {
 			if (result == EOF_IN_STREAM) {
 				printf("End of transmission\n");
 				exit(0);
-			} else if (result == EXIT_FAILURE)
+			} else if (result == -1)
 				errx(1, "process_server_request");
 
 		}
@@ -137,7 +137,7 @@ void poll_cycle(struct pollfd ** fds_ptr) {
 
 			result = process_client_request(fds[0].fd, fds[1].fd);
 
-			if (result == EXIT_FAILURE)
+			if (result == -1)
 				errx(1, "process_client_request");
 
 		}
@@ -179,7 +179,7 @@ int run_client(char * server_address, int server_port,
 
 	}
 
-	return (EXIT_SUCCESS);
+	return (0);
 }
 
 int process_server_request(int fd) {
@@ -190,7 +190,7 @@ int process_server_request(int fd) {
 	int err_dispatch = get_dispatch(fd, &prefix, &message);
 
 	if (err_dispatch == -1)
-		return (EXIT_FAILURE);
+		return (-1);
 	else if (err_dispatch == EOF_IN_STREAM)
 		return (EOF_IN_STREAM);
 
@@ -210,7 +210,7 @@ int process_server_request(int fd) {
 
 		// client doesn't take commands from server
 		send_end(fd);
-		return (EXIT_FAILURE);
+		return (-1);
 
 	} else if (strcmp(prefix, "MSG") == 0) {
 
@@ -224,7 +224,7 @@ int process_server_request(int fd) {
 	if (message != NULL)
 		free(message);
 
-	return (EXIT_SUCCESS);
+	return (0);
 }
 
 
@@ -243,7 +243,7 @@ int process_client_request(int server_fd, int line_fd) {
 
 		if (NULL != strstr(cmd_argument(line), " ")) {
 			printf("Commands cannot contain spaces\n");
-			return (EXIT_SUCCESS);
+			return (0);
 		}
 
 		return (send_command(server_fd, cmd_argument(line)));

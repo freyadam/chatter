@@ -90,7 +90,7 @@ static void process_comm_request(struct pollfd ** fds,
 	prefix = NULL; message = NULL;
 
 	// add new client
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
 		errx(1, "get_dispatch");
 
 	if (strcmp(prefix, "MSG") != 0)
@@ -99,7 +99,7 @@ static void process_comm_request(struct pollfd ** fds,
 	new_username = message;
 	message = NULL;
 
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
 		errx(1, "get_dispatch");
 
 	if (strcmp(prefix, "MSG") == 0) {

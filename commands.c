@@ -42,15 +42,15 @@ static int load_commands_aux(char * filename) {
 
 		cmd_name = strtok_r(line, " ", &save_ptr);
 		if (cmd_name == NULL || cmd_name[0] == '\0') {
-			printf("Malformed line in commands file, \
-		skipping...\n");
+			printf("Malformed line in commands file, "
+		"skipping...\n");
 			continue;
 		}
 
 		cmd = line + strlen(cmd_name) + 1;
 		if (cmd == NULL || cmd[0] == '\0') {
-			printf("Malformed line in commands file, \
-		skipping...\n");
+			printf("Malformed line in commands file, "
+		"skipping...\n");
 			continue;
 		}
 
@@ -124,21 +124,22 @@ void list_commands() {
 
 static int perform_command_aux(int fd, char * cmd, char * room_name) {
 
-	char * temp = malloc(strlen("/tmp/") + 6 + strlen(room_name) + 1);
-		if (temp == NULL) {
-				err(1, "malloc - perform_command_aux");
-		}
+        int tmp_str_len = strlen("/tmp/") + 6 + strlen(room_name) + 1;
+	char * temp = malloc(tmp_str_len);
+        if (temp == NULL) {
+          err(1, "malloc - perform_command_aux");
+        }
 
-	snprintf(temp, 5 + 5 + 1 + strlen(room_name) + 1,
-		"/tmp/%d_%s", getpid(), room_name);
+        snprintf(temp, tmp_str_len, "/tmp/%d_%s", getpid(), room_name);
 
 	// combination of pid and room name is unique
-	char * arg = malloc(strlen(cmd) + 3 + strlen(temp) + 1);
+        int arg_str_len = strlen(cmd) + 3 + strlen(temp) + 1;
+	char * arg = malloc(arg_str_len);
 		if (arg == NULL) {
 				err(1, "malloc - perform_command_aux");
 		}
 
-	snprintf(arg, strlen(cmd) + 3 + strlen(temp) + 1,
+	snprintf(arg, arg_str_len,
 		"%s > %s", cmd, temp);
 
 	if (system(arg) == -1)

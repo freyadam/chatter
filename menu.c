@@ -189,7 +189,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr,
 
 	(*fds_size)++;
 
-	return (EXIT_SUCCESS);
+	return (0);
 
 }
 
@@ -201,7 +201,7 @@ static void process_comm_request(struct pollfd ** fds,
 	prefix = NULL; message = NULL;
 
 	// add new client
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
 		errx(1, "get_dispatch");
 
 	if (strcmp(prefix, "MSG") != 0) {
@@ -211,7 +211,7 @@ static void process_comm_request(struct pollfd ** fds,
 
 	new_username = strdup(message);
 
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != EXIT_SUCCESS)
+	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
 		errx(1, "get_dispatch");
 
 	if (strcmp(prefix, "MSG") == 0) {
@@ -295,13 +295,13 @@ static void process_client_request(struct pollfd ** fds,
 				send_message(client_fd, "User's name:");
 
 				if (get_message(client_fd, &username)
-		== EXIT_SUCCESS) {
+		== 0) {
 
 					send_message(client_fd,
 		"User's password:");
 
 					if (get_message(client_fd, &passwd)
-		== EXIT_SUCCESS) {
+		== 0) {
 
 						if (insert_user(user_file,
 		username, passwd) == true)
@@ -326,7 +326,7 @@ static void process_client_request(struct pollfd ** fds,
 				char * new_room_name = NULL;
 
 				if (get_message(client_fd, &new_room_name)
-		!= EXIT_SUCCESS)
+		!= 0)
 					send_message(client_fd,
 		"Failed to add new room");
 				else {
@@ -362,7 +362,7 @@ static void process_client_request(struct pollfd ** fds,
 				// transfer client to the chat room
 				printf("%s\n", thr_ptr->name);
 				if (transfer_client(thr_ptr->comm_fd,
-		fds, names, fds_size, client_no) != EXIT_SUCCESS)
+		fds, names, fds_size, client_no) != 0)
 					errx(1, "transfer_client");
 
 			}
