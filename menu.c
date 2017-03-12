@@ -152,6 +152,7 @@ void print_info_to_new_client(int fd) {
 		snprintf(name, room_str_len,
 		"%d - %s", counter++, thr_ptr->name);
 		send_message(fd, name);
+                
 	}
 
 	// list options

@@ -18,5 +18,6 @@
 #include <assert.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #endif // SYSTEM_HEADERS_H_

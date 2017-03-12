@@ -18,9 +18,7 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 	char client_no_char[10];
 
 	send_message(room_fd, (*names)[client_no]);
-	snprintf(client_no_char, 10, "%d", client_fd);
-	send_message(room_fd, client_no_char);
-
+        send_message_f(room_fd, "%d", client_fd);
 	for (i = client_no+1; i < *fds_size; i++) {
 		(*fds)[i-1] = (*fds)[i];
 		(*names)[i-1] = (*names)[i];

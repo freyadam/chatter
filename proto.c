@@ -210,6 +210,24 @@ int send_message(int fd, char * message) {
 	return (result);
 }
 
+int send_message_f(int fd, char * format, ...) {
+
+  char formatted_message[MAX_MSG_LEN];
+
+  va_list args;
+  va_start(args, format);
+
+  int chars_written = vsnprintf(formatted_message, MAX_MSG_LEN, format, args);
+  if (chars_written < 0 || chars_written > MAX_MSG_LEN)
+    return (-1);
+
+  send_message(fd, formatted_message);
+  
+  va_end(args);
+
+  return (0);
+}
+
 int send_command(int fd, char * cmd) {
 
 	char * dispatch = malloc((3 + 1 + strlen(cmd) + 1 + 1));

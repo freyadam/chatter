@@ -6,6 +6,8 @@
 #define	MAX_MSG_LEN_SIZE 6
 #define MSG_PREFIX_LEN 17
 
+#define MAX_MSG_LEN 4000
+
 // FAILURE and EOF_STREAM are not valid types of dispatch
 // but return value that signals unsuccessful retrieval 
 // of message
@@ -24,6 +26,7 @@ int get_message(int fd, char ** contents_ptr);
 
 int send_dispatch(int fd, char * dispatch);
 int send_message(int fd, char * message);
+int send_message_f(int fd, char * format, ...);
 int send_command(int fd, char * cmd);
 int send_error(int fd);
 int send_exit(int fd);
