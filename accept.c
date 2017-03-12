@@ -71,7 +71,6 @@ int get_listening_socket(unsigned short server_port) {
 void accept_thread_cycle(int fd) {
 
 	int client_fd;
-	char client_fd_str[6];
 
 	client_fd = accept(fd, NULL, NULL);
 
@@ -99,10 +98,9 @@ void accept_thread_cycle(int fd) {
 	// of newly accepted client to the menu thread
 	send_message(thread_list->comm_fd, username);
 
-	snprintf(client_fd_str, 6, "%d", client_fd);
-	send_message(thread_list->comm_fd, client_fd_str);
+	send_message_f(thread_list->comm_fd, "%d", client_fd);
 
-        free(username);
+	free(username);
 	free(password);
 
 }

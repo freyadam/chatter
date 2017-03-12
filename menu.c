@@ -149,9 +149,7 @@ void print_info_to_new_client(int fd) {
 
                 assert(100 > room_str_len); // make sure that room name is not too long
 
-		snprintf(name, room_str_len,
-		"%d - %s", counter++, thr_ptr->name);
-		send_message(fd, name);
+		send_message_f(fd, "%d - %s", counter++, thr_ptr->name);
                 
 	}
 

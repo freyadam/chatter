@@ -15,10 +15,9 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 		char *** names, int * fds_size, int client_no) {
 
 	int i, client_fd = (*fds)[client_no].fd;
-	char client_no_char[10];
 
 	send_message(room_fd, (*names)[client_no]);
-        send_message_f(room_fd, "%d", client_fd);
+	send_message_f(room_fd, "%d", client_fd);
 	for (i = client_no+1; i < *fds_size; i++) {
 		(*fds)[i-1] = (*fds)[i];
 		(*names)[i-1] = (*names)[i];
@@ -40,16 +39,14 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 int delete_client(struct pollfd ** fds, char *** names,
 		int * fds_size, int client_no) {
 
-        int i, client_name_str_len = 50 + strlen((*names)[client_no]);
+	int i, client_name_str_len = 50 + strlen((*names)[client_no]);
 	char * client_name = malloc(client_name_str_len);
 
 	close((*fds)[client_no].fd);
 
 	for (i = 2; i < *fds_size; i++) {
-		if (i != client_no) {
-		snprintf(client_name, client_name_str_len,
-		"User %s left the room.", (*names)[client_no]);
-			send_message((*fds)[i].fd, client_name);
+		if (i != client_no) {		
+			send_message_f((*fds)[i].fd, "User %s left the room.", (*names)[client_no]);
 		}
 	}
 

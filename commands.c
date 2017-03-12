@@ -134,7 +134,7 @@ static int perform_command_aux(int fd, char * cmd, char * room_name) {
 
 	// combination of pid and room name is unique
         int arg_str_len = strlen(cmd) + 3 + strlen(temp) + 1;
-	char * arg = malloc(arg_str_len);
+		char * arg = malloc(arg_str_len);
 		if (arg == NULL) {
 				err(1, "malloc - perform_command_aux");
 		}
