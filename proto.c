@@ -53,10 +53,12 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	return (position-1);	// don't include the null character
 }
 
-int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
+enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
-	assert(EOF_IN_STREAM != -1);
-	assert(EOF_IN_STREAM != 0);
+        if (*message_ptr) {
+          free(*message_ptr);
+        }
+        *message_ptr = NULL;
 
 	char * prefix = NULL;
 	ssize_t prefix_len;
@@ -65,38 +67,38 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 	prefix_len = get_delim(fd, &prefix, DELIMITER);
 
 	if (prefix_len == 0)
-			return (EOF_IN_STREAM);
+			return (EOF_STREAM);
 	else if (prefix_len == -1)
-			return (-1);
+			return (FAILURE);
 	else if (prefix_len != 3)
-			return (-1);
+			return (FAILURE);
 
 	if (strcmp(prefix, "ERR") == 0) { // ERROR
 
-		*prefix_ptr = prefix;
 		*message_ptr = NULL;
+                return (ERR);
 
 	} else if (strcmp(prefix, "EXT") == 0) { // EXIT
 
-		*prefix_ptr = prefix;
 		*message_ptr = NULL;
+                return (EXT);
 
 	} else if (strcmp(prefix, "END") == 0) { // END OF TRANSMISSION
 
-		*prefix_ptr = prefix;
 		*message_ptr = NULL;
+                return (END);
 
 	} else if (strcmp(prefix, "CMD") == 0) { // COMMAND
 
 		// get the actual command
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
 		if (err_arg == -1)
-				return (-1);
+				return (FAILURE);
 		else if (err_arg == 0)
-				return (EOF_IN_STREAM);
+				return (EOF_STREAM);
 
-		*prefix_ptr = prefix;
 		// message_ptr already set in get_delim
+                return (CMD);
 
 	} else if (strcmp(prefix, "MSG") == 0) { // MESSAGE
 
@@ -104,20 +106,18 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
 
 		if (err_arg == -1) {
-				return (-1);
+				return (FAILURE);
 
 		} else if (err_arg == 0)
-				return (EOF_IN_STREAM);
+				return (EOF_STREAM);
 
 		int msg_length = strtol(*message_ptr, NULL, 10);
 		if (msg_length == 0 && errno == EINVAL)
-			err(1, "strtol");
-
-		free(*message_ptr);
+                  return (FAILURE);
 
 		*message_ptr = malloc(msg_length+1);
 		if (message_ptr == NULL)
-			err(1, "malloc");
+                  return (FAILURE);
 
 		// get the actual message
 		int chars_read = 0;
@@ -126,29 +126,32 @@ int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr) {
 		msg_length+1-chars_read);
 
 			if (err_arg == -1) {
-				return (-1);
+				return (FAILURE);
 			}
 
 			chars_read += err_arg;
 		}
 
 		if ((*message_ptr)[msg_length] != DELIMITER) {
-				return (-1);
+				return (FAILURE);
 		}
 
 		(*message_ptr)[msg_length] = '\0';
 
-		*prefix_ptr = prefix;
 		// message_ptr already set previously
 
+                return (MSG);
 
 	} else { // UNKNOWN PREFIX
 
-			return (-1);
+			return (FAILURE);
 
 	}
 
-	return (0);
+        // program should never reach this part
+        assert(false);
+        return (FAILURE);
+
 }
 
 int get_message(int fd, char ** contents_ptr) {
@@ -158,17 +161,19 @@ int get_message(int fd, char ** contents_ptr) {
 	}
 
 	*contents_ptr = NULL;
-	char * prefix = NULL;
 
-	int err = get_dispatch(fd, &prefix, contents_ptr);
+	enum dispatch_t type = get_dispatch(fd, contents_ptr);
 
-	if (err == -1 || err == EOF_IN_STREAM)
-			return (err);
-
-	if (strcmp(prefix, "MSG") != 0)
-			return (-1);
-
-        free(prefix);
+        switch(type){
+        case FAILURE:
+          return (-1);
+        case EOF_STREAM:
+          return (EOF_IN_STREAM);
+        case MSG:
+          break;
+        default:
+          return (-1);
+        }
 
 	return (0);
 
@@ -193,10 +198,9 @@ int send_message(int fd, char * message) {
           + 1 + strlen(message) + 1 + 1;
 	char * dispatch = malloc(dispatch_len);
 
-	int msg_len = 3 + 1 + 10 + 1 + strlen(message) + 2;
-	int result = snprintf(dispatch, msg_len, "MSG %d %s ",
+	int result = snprintf(dispatch, dispatch_len, "MSG %d %s ",
 		(int)strlen(message), message);
-	if (result < 0 || result > msg_len)
+	if (result < 0 || result > dispatch_len)
 			return (-1);
 
 	result = send_dispatch(fd, dispatch);

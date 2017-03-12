@@ -86,28 +86,27 @@ static void process_comm_request(struct pollfd ** fds,
 		char *** names, int * fds_size, char * room_name) {
 
 	int new_fd;
-	char * prefix, * message, * new_username;
-	prefix = NULL; message = NULL;
-
-	// add new client
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
-		errx(1, "get_dispatch");
-
-	if (strcmp(prefix, "MSG") != 0)
-		errx(1, "new_client");
-
-	new_username = message;
+	char * message, * new_username;
 	message = NULL;
 
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
-		errx(1, "get_dispatch");
+	// add new client
+        enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
+	if (type != MSG)
+		errx(1, "process_comm_request");
 
-	if (strcmp(prefix, "MSG") == 0) {
+	new_username = strdup(message);
+
+        free(message);
+	message = NULL;
+
+        type = get_dispatch((*fds)[1].fd, &message);
+	if (type != MSG)
+		errx(1, "process_comm_request");
+	else {
 		new_fd = strtol(message, NULL, 10);
 		if (new_fd == 0 && errno == EINVAL)
 			err(1, "strtol");
-	} else
-		errx(1, "new_client");
+        }
 
 	printf("New client: %s -- its fd: %d\n", new_username, new_fd);
 
@@ -117,8 +116,6 @@ static void process_comm_request(struct pollfd ** fds,
 	// free(new_username);
 
 	// release allocated resources
-	if (prefix != NULL)
-		free(prefix);
 	if (message != NULL)
 		free(message);
 
@@ -128,16 +125,19 @@ static void process_comm_request(struct pollfd ** fds,
 static void process_client_request(struct pollfd ** fds,
 		char *** names, int * fds_size, int client_no) {
 
-	int err_no, i, client_fd;
-	char * prefix, * message, * resend_msg;
-	prefix = NULL; message = NULL;
+        int i, client_fd, resend_msg_str_len;
+	char * message, * resend_msg;
+
+        printf("Processing client request\n");
+
+	message = NULL;
 	client_fd = (*fds)[client_no].fd;
 
-	err_no = get_dispatch(client_fd, &prefix, &message);
-	if (err_no == -1) { // something went wrong
+	enum dispatch_t type = get_dispatch(client_fd, &message);
+	if (type == FAILURE) { // something went wrong
 				close(client_no);
 		errx(1, "get_dispatch");
-	} else if (err_no == EOF_IN_STREAM) // EOF
+	} else if (type == EOF_STREAM) // EOF
 
 		// end (*fds)[client_no];
 		(*fds)[client_no].events = 0;
@@ -146,56 +146,50 @@ static void process_client_request(struct pollfd ** fds,
 
 		printf("Dispatch received\n");
 
-		if (strcmp(prefix, "ERR") == 0) {
+                switch(type){
+                case ERR:
+                  send_message(client_fd, "Error message received.");
+                  break;
+                case EXT:
+                  transfer_client(thread_list->comm_fd,
+    fds, names, fds_size, client_no);
+                  break;
+                case END:
+                  // end connection
+                  printf("Closing connection for client %d\n", client_no);
+                  delete_client(fds, names, fds_size, client_no);
+                  break;
+                case CMD:                  
+                  printf("%s\n", message);
 
-			send_message(client_fd, "Error message received.");
-
-		} else if (strcmp(prefix, "EXT") == 0) {
-
-			// back to menu
-			transfer_client(thread_list->comm_fd,
-		fds, names, fds_size, client_no);
-
-		} else if (strcmp(prefix, "END") == 0) {
-
-			// end connection
-			printf("Closing connection for client %d\n", client_no);
-			delete_client(fds, names, fds_size, client_no);
-
-		} else if (strcmp(prefix, "CMD") == 0) {
-
-			printf("%s\n", message);
-
-			// perform cmd
-			char * cmd = get_command(message);
-			if (cmd == NULL) {
-				send_message(client_fd, "Command not found.");
-			} else {
-				perform_command(client_fd, cmd,
-		(*names)[0]); // name of room
-			}
-
-		} else if (strcmp(prefix, "MSG") == 0) {
-
-			// send message to all the other clients
-                        int resend_msg_str_len = 1 + 4 + 2 + strlen(message) + 1;
-			resend_msg = malloc(resend_msg_str_len);
-			if (resend_msg == NULL)
-				err(1, "malloc");
-			err_no = snprintf(resend_msg,
-                resend_msg_str_len,
-		"<%s> %s", (*names)[client_no], message);
-			for (i = 2; i < *fds_size; i++) {
-				if (i != client_no)
-					send_message((*fds)[i].fd, resend_msg);
-			}
-
-
-		}
+                  // perform cmd
+                  char * cmd = get_command(message);
+                  if (cmd == NULL) {
+                    send_message(client_fd, "Command not found.");
+                  } else {
+                    perform_command(client_fd, cmd,
+                                    (*names)[0]); // name of room
+                  }
+                  break;
+                case MSG:
+                  // send message to all the other clients
+                  resend_msg_str_len = 1 + 4 + 2 + strlen(message) + 1;
+                  resend_msg = malloc(resend_msg_str_len);
+                  if (resend_msg == NULL)
+                    err(1, "malloc");
+                  snprintf(resend_msg,
+                           resend_msg_str_len,
+                           "<%s> %s", (*names)[client_no], message);
+                  for (i = 2; i < *fds_size; i++) {
+                    if (i != client_no)
+                      send_message((*fds)[i].fd, resend_msg);
+                  }
+                  break;
+                default:
+                  assert(false);
+                }
 
 		// release allocated resources
-		if (prefix != NULL)
-			free(prefix);
 		if (message != NULL)
 			free(message);
 
@@ -251,7 +245,7 @@ int add_client(struct pollfd ** fds_ptr, char *** names, int * fds_size,
 	if (*names == NULL)
 		err(1, "realloc");
 
-	init_pollfd_record(fds_ptr[*fds_size], fd);
+	init_pollfd_record(&((*fds_ptr)[*fds_size]), fd);
 	(*names)[*fds_size] = user_name;
 
 	// send chatroom info to new user

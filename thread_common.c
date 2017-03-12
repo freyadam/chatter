@@ -74,27 +74,29 @@ int delete_client(struct pollfd ** fds, char *** names,
 void process_priority_request(struct pollfd * fds,
 		int fds_size, char * room_name) {
 
-	char * prefix, * message;
+        char * message = NULL;
 	int client_no;
-	prefix = NULL; message = NULL;
-	get_dispatch(fds[0].fd, &prefix, &message);
+	enum dispatch_t type = get_dispatch(fds[0].fd, &message);
 
+        if (type == FAILURE || type == EOF_STREAM)
+          err(1,"process_priority_request");
 
-	if (message != NULL)
-		printf("Priority message received in %s: %s _ %s\n",
-		room_name, prefix, message);
-	else
+	if (type == MSG)
 		printf("Priority message received in %s: %s\n",
-		room_name, prefix);
+		room_name, message);
+	else
+		printf("Priority message received in %s\n",
+		room_name);
 
-	if (strcmp(prefix, "END") == 0) {
+	if (type == END) {
 		for (client_no = 2; client_no < fds_size;
 		client_no++) { // send end to all clients
 			send_end(fds[client_no].fd);
 		}
-		free(prefix); free(message);
+		free(message);
 		pthread_exit(NULL);
 	}
-	free(prefix); free(message);
+
+	free(message);
 
 }

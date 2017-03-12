@@ -6,10 +6,20 @@
 #define	MAX_MSG_LEN_SIZE 6
 #define MSG_PREFIX_LEN 17
 
-enum dispatch_t {MSG, CMD, ERR, EXT};
+// FAILURE and EOF_STREAM are not valid types of dispatch
+// but return value that signals unsuccessful retrieval 
+// of message
+enum dispatch_t {
+  MSG,
+  CMD,
+  ERR,
+  EXT,
+  END,
+  EOF_STREAM,
+  FAILURE};
 
 int get_delim(int fd, char ** line_ptr, char del);
-int get_dispatch(int fd, char ** prefix_ptr, char ** message_ptr);
+enum dispatch_t get_dispatch(int fd, char ** message_ptr);
 int get_message(int fd, char ** contents_ptr);
 
 int send_dispatch(int fd, char * dispatch);

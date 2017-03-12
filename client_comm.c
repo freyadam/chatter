@@ -184,47 +184,35 @@ int run_client(char * server_address, int server_port,
 
 int process_server_request(int fd) {
 
-	char * prefix, * message;
-	prefix = NULL; message = NULL;
+        char * message = NULL;
 
-	int err_dispatch = get_dispatch(fd, &prefix, &message);
+	enum dispatch_t disp_type = get_dispatch(fd, &message);
 
-	if (err_dispatch == -1)
-		return (-1);
-	else if (err_dispatch == EOF_IN_STREAM)
-		return (EOF_IN_STREAM);
+        switch(disp_type){
+        case FAILURE:
+          return (-1);
+        case EOF_STREAM:
+          return (EOF_IN_STREAM);
+        case ERR:
+          printf("ERR\n");
+          break;
+        case EXT:
+          printf("EXT\n");
+          break;
+        case END:
+          return (EOF_IN_STREAM);
+        case CMD:
+          send_end(fd);
+          return (-1);
+        case MSG:
+          printf("%s\n", message);
+        }
 
-	if (strcmp(prefix, "ERR") == 0) {
-
-		printf("ERR\n");
-
-	} else if (strcmp(prefix, "EXT") == 0) {
-
-		printf("EXT\n");
-
-	} else if (strcmp(prefix, "END") == 0) {
-
-		return (EOF_IN_STREAM);
-
-	} else if (strcmp(prefix, "CMD") == 0) {
-
-		// client doesn't take commands from server
-		send_end(fd);
-		return (-1);
-
-	} else if (strcmp(prefix, "MSG") == 0) {
-
-		// print message
-		printf("%s\n", message);
-
-	}
-
-	if (prefix != NULL)
-		free(prefix);
 	if (message != NULL)
 		free(message);
 
 	return (0);
+
 }
 
 

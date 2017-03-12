@@ -118,10 +118,12 @@ main(int argc, char *argv[]) {
                         print_usage_and_exit(argv[0]);
 		}
 
-	char * port_arg = argv[optind];
-        if (optind >= argc) {
+
+        if (optind > argc) {
           exit(1);
         }
+
+	char * port_arg = argv[optind];
 
 	if (port_arg == NULL) {
           print_usage_and_exit(argv[0]);
@@ -135,7 +137,6 @@ main(int argc, char *argv[]) {
 
 	// ----- PRINT SETTINGS -----
 	print_server_settings(server_port);
-
 
 
 	// ----- RUN -----

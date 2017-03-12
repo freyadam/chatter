@@ -93,10 +93,7 @@ void accept_thread_cycle(int fd) {
 		return;
 	}
 
-	send_message(client_fd, "Connected. ");
-
-        free(username);
-	free(password);
+	send_message(client_fd, "Connected.");
 
 	// send username and file descriptor
 	// of newly accepted client to the menu thread
@@ -104,6 +101,9 @@ void accept_thread_cycle(int fd) {
 
 	snprintf(client_fd_str, 6, "%d", client_fd);
 	send_message(thread_list->comm_fd, client_fd_str);
+
+        free(username);
+	free(password);
 
 }
 

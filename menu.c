@@ -60,7 +60,6 @@ void * run_menu_thread(void * arg_struct) {
 
 			if (fds[client_no].revents & POLLIN) {
 
-
 				process_client_request(&fds,
 		&names, &fds_size, client_no);
 
@@ -163,8 +162,8 @@ void print_info_to_new_client(int fd) {
 	send_message(fd, "c - Create new chatroom");
 
 	// how to pick your setting
-	send_message(fd, "To select your option \
-		simply type its associated number or letter.");
+	send_message(fd, "To select your option "
+    "simply type its associated number or letter.");
 
 	free(name);
 
@@ -183,7 +182,7 @@ int add_client_to_menu(struct pollfd ** fds_ptr,
 	if (*names == NULL)
 		err(1, "realloc");
 
-	init_pollfd_record(fds_ptr[*fds_size], fd);
+	init_pollfd_record(&((*fds_ptr)[*fds_size]), fd);
 
 	(*names)[*fds_size] = username;
 
@@ -199,31 +198,25 @@ static void process_comm_request(struct pollfd ** fds,
 		char *** names, int * fds_size, char * room_name) {
 
 	int new_fd;
-	char * prefix, * message, * new_username;
-	prefix = NULL; message = NULL;
+	char * message, * new_username;
+	message = NULL;
 
-	// add new client
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
-		errx(1, "get_dispatch");
-
-	if (strcmp(prefix, "MSG") != 0) {
-		printf("Malformed dispatch from room %s\n", room_name);
-		return;
-	}
-
+        // add new client
+        enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
+        if (type != MSG) {
+          errx(1, "get_dispatch");
+        }
+	       
 	new_username = strdup(message);
 
-	if (get_dispatch((*fds)[1].fd, &prefix, &message) != 0)
-		errx(1, "get_dispatch");
-
-	if (strcmp(prefix, "MSG") == 0) {
-		new_fd = strtol(message, NULL, 10);
-		if (new_fd == 0 && errno == EINVAL)
-			err(1, "strtol");
-	} else {
-		printf("Malformed dispatch from room %s\n", room_name);
-		return;
-	}
+        type = get_dispatch((*fds)[1].fd, &message);
+	if ( type == MSG) {
+          new_fd = strtol(message, NULL, 10);
+          if (new_fd == 0 && errno == EINVAL)
+            err(1, "strtol");
+        } else {
+          errx(1, "get_dispatch");
+        }
 
 	printf("New client: %s -- %d\n", new_username, new_fd);
 
@@ -233,10 +226,8 @@ static void process_comm_request(struct pollfd ** fds,
 	// free(new_username);
 
 	// release allocated resources
-	if (prefix != NULL)
-		free(prefix);
 	if (message != NULL)
-	free(message);
+          free(message);
 
 }
 
@@ -244,139 +235,122 @@ static void process_comm_request(struct pollfd ** fds,
 static void process_client_request(struct pollfd ** fds,
 		char *** names, int * fds_size, int client_no) {
 
-	int err_no, client_fd;
-	char * prefix, * message;
-	prefix = NULL; message = NULL;
+	int client_fd;
+	char * message;
+	message = NULL;
 	client_fd = (*fds)[client_no].fd;
 
-	err_no = get_dispatch(client_fd, &prefix, &message);
-	if (err_no == -1) // something went wrong
-		errx(1, "get_dispatch");
-	else if (err_no == EOF_IN_STREAM) // EOF
+	enum dispatch_t type = get_dispatch(client_fd, &message);
 
-		// end (*fds)[client_no];
-		(*fds)[client_no].events = 0;
+        switch(type){
+        case FAILURE:
+          errx(1, "get_dispatch");
+          break;
+        case EOF_STREAM:
+          // end (*fds)[client_no];
+          (*fds)[client_no].events = 0;
+          break;
+        default:
+          printf("Dispatch received\n");
+        }
 
-	else { // everything worked well --> valid message
+        switch(type){
+        case ERR:
+          send_message(client_fd,
+    "Error message received.");
+          break;
+        case EXT:
+          // back to menu
+          send_message(client_fd,
+    "EXT: Nowhere to exit to from menu.");
+          break;
+        case END:
+          // end connection
+          printf("Closing connection for client %d\n", client_no);
+          delete_client(fds, names, fds_size, client_no);
+          break;
+        case CMD:
+          // perform cmd
+          send_message(client_fd,
+    "CMD: This function is disabled in menu.");
+          break;
+        case MSG:
 
-		printf("Dispatch received\n");
+          if (strcmp(message, "u") == 0) {
 
-		if (strcmp(prefix, "ERR") == 0) {
-
-			send_message(client_fd,
-		"Error message received.");
-
-		} else if (strcmp(prefix, "EXT") == 0) {
-
-			// back to menu
-			send_message(client_fd,
-		"EXT: Nowhere to exit to from menu.");
-
-		} else if (strcmp(prefix, "END") == 0) {
-
-			// end connection
-			printf("Closing connection for client %d\n", client_no);
-			delete_client(fds, names, fds_size, client_no);
-
-		} else if (strcmp(prefix, "CMD") == 0) {
-
-			// perform cmd
-			send_message(client_fd,
-		"CMD: This function is disabled in menu.");
-
-		} else if (strcmp(prefix, "MSG") == 0) {
-
-			if (strcmp(message, "u") == 0) {
-
-			// send_message(client_fd,
-			// "Creating new user is not implemented yet.");
-
-				char * username, * passwd;
-				username = NULL; passwd = NULL;
-
-				send_message(client_fd, "User's name:");
-
-				if (get_message(client_fd, &username)
+            char * username, * passwd;
+            username = NULL; passwd = NULL;
+            send_message(client_fd, "User's name:");
+            if (get_message(client_fd, &username)
 		== 0) {
+              send_message(client_fd,
+                           "User's password:");
+              if (get_message(client_fd, &passwd)
+                  == 0) {
+                if (insert_user(user_file,
+                                username, passwd) == true)
+                  send_message(client_fd,
+                               "User added.");
+                else
+                  send_message(client_fd,
+                               "Failed to add new user");
+              } else
+                send_message(client_fd,
+                             "Failed to add new user");
+            } else
+              send_message(client_fd,
+                           "Failed to add new user");
 
-					send_message(client_fd,
-		"User's password:");
+          } else if (strcmp(message, "c") == 0) {
 
-					if (get_message(client_fd, &passwd)
-		== 0) {
-
-						if (insert_user(user_file,
-		username, passwd) == true)
-							send_message(client_fd,
-		"User added.");
-						else
-							send_message(client_fd,
-		"Failed to add new user");
-
-					} else
-						send_message(client_fd,
-		"Failed to add new user");
-
-				} else
-					send_message(client_fd,
-		"Failed to add new user");
-
-			} else if (strcmp(message, "c") == 0) {
-
-				send_message(client_fd, "New room's name:");
-
-				char * new_room_name = NULL;
-
-				if (get_message(client_fd, &new_room_name)
+            send_message(client_fd, "New room's name:");
+            char * new_room_name = NULL;
+            if (get_message(client_fd, &new_room_name)
 		!= 0)
-					send_message(client_fd,
-		"Failed to add new room");
-				else {
-					insert_room(room_file, new_room_name);
-					send_message(client_fd,
-		"Added new room");
-				}
+              send_message(client_fd,
+                           "Failed to add new room");
+            else {
+              insert_room(room_file, new_room_name);
+              send_message(client_fd,
+                           "Added new room");
+            }
+            print_info_to_new_client(client_fd);
 
-				print_info_to_new_client(client_fd);
+          } else { // enter chat room
 
-			} else { // enter chat room
+            errno = 0;
+            int chat_no = strtol(message, NULL, 10);
+            if (errno != 0 || chat_no <= 0) {
+              send_message(client_fd,
+                           "Invalid message - no option selected.");
+              return;
+            }
+            // select which chat room to enter
+            struct thread_data * thr_ptr;
+            for (thr_ptr = thread_list->next;
+                 thr_ptr != NULL && chat_no-- > 1; thr_ptr = thr_ptr->next) {}
+            if (chat_no >= 1) {
+              send_message(client_fd,
+                           "Such a room does not exist, the number is too high.");
+              return;
+            }
+            // transfer client to the chat room
+            printf("%s\n", thr_ptr->name);
+            if (transfer_client(thr_ptr->comm_fd,
+                                fds, names, fds_size, client_no) != 0)
+              errx(1, "transfer_client");
 
-				errno = 0;
-				int chat_no = strtol(message, NULL, 10);
+          }
+          break;
+        default:
+          assert(false);
+        }
 
-				if (errno != 0 || chat_no <= 0) {
-					send_message(client_fd,
-		"Invalid message - no option selected.");
-					return;
-				}
-
-				// select which chat room to enter
-				struct thread_data * thr_ptr;
-				for (thr_ptr = thread_list->next;
-		thr_ptr != NULL && chat_no-- > 1; thr_ptr = thr_ptr->next) {}
-
-				if (chat_no >= 1) {
-					send_message(client_fd,
-		"Such a room does not exist, the number is too high.");
-					return;
-				}
-
-				// transfer client to the chat room
-				printf("%s\n", thr_ptr->name);
-				if (transfer_client(thr_ptr->comm_fd,
-		fds, names, fds_size, client_no) != 0)
-					errx(1, "transfer_client");
-
-			}
-
-		}
-
-		// release allocated resources
-		if (prefix != NULL)
-			free(prefix);
-		if (message != NULL)
-			free(message);
-
-	}
+        // release allocated resources
+        if (message != NULL)
+          free(message);
+        
 
 }
+
+
