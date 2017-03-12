@@ -85,7 +85,6 @@ void * lines_to_pipe(void * arg) {
 			line[current++] = getchar();
 
 			if (line[current-1] == '\n') {
-				printf("End of line\n");
 				break;
 			}
 
