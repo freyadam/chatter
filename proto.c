@@ -3,7 +3,7 @@
 #include "proto.h"
 
 // get next delimited part of text
-// without the delimititer (which will be consumed)
+// without the delimiter (which will be consumed)
 int get_delim(int fd, char ** line_ptr, char del) {
 
 	if ((*line_ptr) != NULL)
@@ -181,10 +181,20 @@ int get_message(int fd, char ** contents_ptr) {
 
 int send_dispatch(int fd, char * dispatch) {
 
-	int result = write(fd, dispatch, strlen(dispatch));
+	int sum, result;
+	sum = 0;
 
-	if (result != strlen(dispatch))
+	while (sum < strlen(dispatch)) {
+
+		result = write(fd, dispatch + sum, strlen(dispatch));
+
+		if (result == -1)
 			return (-1);
+
+		sum += result;
+
+	}
+
 
 	return (0);
 }

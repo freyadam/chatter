@@ -55,34 +55,61 @@ int get_connected_socket(char * server_address, unsigned short server_port) {
 void * lines_to_pipe(void * arg) {
 
 	int * pipe = (int *) arg;
+	int allocated, current;
 	char * line;
-	ssize_t read, wr_read;
-	size_t line_size = 0;
-
+	ssize_t wr_read, all_written;
+	
+	line = NULL;
+	
 	while (true) {
+	   
+		current = 0;
+		allocated = 100;
+		line = malloc(allocated);
 
-		line = NULL;
-		line_size = 0;
+		while (true) {
 
-		while ((read = getline(&line, &line_size, stdin)) != 0) {
+			// max length of a message, rest will be sent separately
+			if (current >= 5000){
+				break;
+			}
+			
+			if (current+1 == allocated) {
+				allocated += 100;
+				line = realloc(line, allocated);
+				if (line == NULL) {
+					errx(1, "malloc");
+				} 
+			}
+			
+			line[current++] = getchar();
 
-			if (read == -1)
-				err(1, "getline");
-
-			wr_read = write(*pipe, line, read);
-			if (wr_read == -1)
-				err(1, "write");
-			if (wr_read != read) {
-				err(1, "write");
+			if (line[current-1] == '\n') {
+				printf("End of line\n");
+				break;
 			}
 
 		}
 
-		close(*pipe);
+		line[current] = '\0';
+
+		all_written = 0;	   	
+		while( all_written < current ){
+
+			wr_read = write(*pipe, line+all_written, current);
+
+			if (wr_read == -1) {
+				err(1, "write");
+			}
+
+			all_written += wr_read;
+		}
 
 		free(line);
 
 	}
+
+	close(*pipe);
 
 	return (NULL);
 }
@@ -215,7 +242,6 @@ int process_server_request(int fd) {
 
 }
 
-
 char * cmd_argument(char * line) {
 	return (line+5);
 }
@@ -226,7 +252,7 @@ int process_client_request(int server_fd, int line_fd) {
 	int result = get_delim(line_fd, &line, '\n');
 	if (result == -1)
 		err(1, "get_delim");
-
+	
 	if (line == strstr(line, "/cmd")) { // line begins with "/cmd"
 
 		if (NULL != strstr(cmd_argument(line), " ")) {
@@ -239,17 +265,17 @@ int process_client_request(int server_fd, int line_fd) {
 	} else if (strcmp(line, "/end") == 0) { // line begins with "/end"
 
 		return (send_end(server_fd));
-		exit(0);
 
 	} else if (strcmp(line, "/ext") == 0) { // line begins with "/ext"
 
 		return (send_exit(server_fd));
-		exit(0);
 
 	} else { // type of the dispatch is message
 
 		return (send_message(server_fd, line));
 
 	}
+
+	free(line);
 
 }
