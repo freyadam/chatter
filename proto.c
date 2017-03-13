@@ -317,6 +317,11 @@ int send_message_from_file(int fd, char * file_path) {
 	if (lseek(fildes, 0, SEEK_SET) == -1) // set file offset to start again
 		err(1, "lseek");
 
+	if (length_of_file >= 10000){
+		send_message(fd, "Failed to send message from file, file was too long.");
+		return (-1);	
+	}
+
 	// write header
 	char prefix[MSG_PREFIX_LEN];
 	snprintf(prefix, MSG_PREFIX_LEN, "MSG %d ", length_of_file);

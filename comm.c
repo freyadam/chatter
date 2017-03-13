@@ -78,6 +78,9 @@ void * run_comm_thread(void * arg_struct) {
 
 	}
 
+	free(fds);
+	free(names);
+
 	pthread_exit(NULL);
 
 }
