@@ -218,8 +218,6 @@ int process_server_request(int fd) {
 
 	enum dispatch_t disp_type = get_dispatch(fd, message_ptr);
 
-	printf("disp\n");
-
 	switch (disp_type) {
 	case FAILURE:
 		free(*message_ptr);
