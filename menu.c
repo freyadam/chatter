@@ -93,9 +93,7 @@ void create_menu_thread() {
 		err(1, "pipe");
 
 	thr_data->priority_fd = priority_pipe[1];
-
 	thr_data->name = "Menu";
-
 	thr_data->next = NULL;
 
 	// ----- APPEND TO LIST -----
@@ -133,8 +131,6 @@ void create_menu_thread() {
 
 void print_info_to_new_client(int fd) {
 
-	char * name = malloc(100);
-
 	// send chatroom info to new user
 	send_message(fd, "----- Connected to Menu -----");
 
@@ -166,8 +162,6 @@ void print_info_to_new_client(int fd) {
 	// how to pick your setting
 	send_message(fd, "To select your option "
     "simply type its associated number or letter.");
-
-	free(name);
 
 }
 

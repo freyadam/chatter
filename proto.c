@@ -201,11 +201,11 @@ int send_dispatch(int fd, char * dispatch) {
 
 int send_message(int fd, char * message) {
 
-        // dispatch: 'MSG MSG_LEN MESSAGE_ITSELF \0'
-        // computation below corresponds to elements from dispatch,
-        // summed from left to right
-        int dispatch_len = 3 + 1 + MAX_MSG_LEN_SIZE
-          + 1 + strlen(message) + 1 + 1;
+	// dispatch: 'MSG MSG_LEN MESSAGE_ITSELF \0'
+	// computation below corresponds to elements from dispatch,
+	// summed from left to right
+	int dispatch_len = 3 + 1 + MAX_MSG_LEN_SIZE
+		+ 1 + strlen(message) + 1 + 1;
 	char * dispatch = malloc(dispatch_len);
 
 	int result = snprintf(dispatch, dispatch_len, "MSG %d %s ",

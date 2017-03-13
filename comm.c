@@ -233,7 +233,6 @@ int add_client(struct comm_block * room_info,
 	char *** names = room_info->names;
 	int * fds_size = room_info->size;
 
-	char * name = malloc(50 + strlen(user_name));
 	int i;
 
 	*fds_ptr = (struct pollfd *) realloc(*fds_ptr,
@@ -255,8 +254,6 @@ int add_client(struct comm_block * room_info,
 	for (i = 2; i < *fds_size; i++) {                   
           send_message_f((*fds_ptr)[i].fd, "New user connected: %s", user_name);
 	}
-
-	free(name);
 
 	(*fds_size)++;
 

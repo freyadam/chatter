@@ -15,7 +15,7 @@ void init_hints(struct addrinfo * hints_ptr) {
 int get_connected_socket(char * server_address, unsigned short server_port) {
 
 	int fd;
-	char * server_port_string = malloc(6);
+	char server_port_string[6];
 	struct addrinfo hints, * result, * addr_info;
 
 	init_hints(&hints);
@@ -195,8 +195,8 @@ int run_client(char * server_address, int server_port,
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * 2);
 
 	// initialize pollfd for server
-        init_pollfd_record(&fds[0], server_fd);
-
+	init_pollfd_record(&fds[0], server_fd);
+		
 	// initialize pollfd for user-input
 	init_pollfd_record(&fds[1], line_pipe[0]);
 
