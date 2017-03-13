@@ -73,7 +73,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 	if (prefix_len == 0) {
 		free(prefix);
-		return (EOF_STREAM);		
+		return (EOF_STREAM);
 	} else if (prefix_len == -1) {
 		free(prefix);
 		return (FAILURE);

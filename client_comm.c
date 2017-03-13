@@ -56,7 +56,7 @@ int get_connected_socket(char * server_address, unsigned short server_port) {
 static void lines_to_pipe_cleanup(void * arg) {
 
 	char * line = *((char **) arg);
-	free(line);   
+	free(line);
 
 }
 
@@ -66,7 +66,7 @@ void * lines_to_pipe(void * arg) {
 	int allocated, current;
 	char * line;
 	ssize_t wr_read, all_written;
-	
+
 	line = NULL;
 
 	pthread_cleanup_push(&lines_to_pipe_cleanup, (void *) &line);
@@ -165,7 +165,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 
 		result = process_server_request(fds[0].fd);
 
-		if (result == EOF_IN_STREAM) {			
+		if (result == EOF_IN_STREAM) {
 			printf("End of transmission\n");
 			pthread_cancel(line_thread);
 			pthread_join(line_thread, NULL);
@@ -231,7 +231,7 @@ int process_server_request(int fd) {
 	char * message;
 
 	enum dispatch_t disp_type = get_dispatch(fd, &message);
-   
+
 	switch (disp_type) {
 	case FAILURE:
 		free(message);

@@ -20,7 +20,7 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 	int * fds_size = room_info->size;
 
 	int i, client_fd = (*fds)[client_no].fd;
-	
+
 	send_message(room_fd, (*names)[client_no]);
 
 	free((*names)[client_no]);
@@ -32,7 +32,7 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 	}
 
 	(*fds_size)--;
-	
+
 
 	*fds = realloc(*fds, sizeof (struct pollfd) * (*fds_size));
 	if (*fds == NULL)
