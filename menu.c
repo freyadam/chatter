@@ -207,7 +207,8 @@ static void process_comm_request(struct comm_block * room_info, char * room_name
 		errx(1, "get_dispatch");
 	}
 	       
-	new_username = strdup(message);
+	new_username = message;
+	message = NULL;
 
 	type = get_dispatch((*fds)[1].fd, &message);
 	if ( type == MSG) {

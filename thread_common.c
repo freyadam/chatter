@@ -62,9 +62,13 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	}
 
 	(*fds_size)--;
-
+	
 	*fds = realloc(*fds, sizeof (struct pollfd) * (*fds_size));
 	if (*fds == NULL)
+		err(1, "realloc");
+
+	*names = realloc(*names, sizeof (struct pollfd) * (*fds_size));
+	if (*names == NULL)
 		err(1, "realloc");
 
 	free(client_name);

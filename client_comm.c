@@ -211,7 +211,7 @@ int run_client(char * server_address, int server_port,
 
 int process_server_request(int fd) {
 
-        char * message = NULL;
+	char * message = NULL;
 
 	enum dispatch_t disp_type = get_dispatch(fd, &message);
 

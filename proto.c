@@ -55,10 +55,10 @@ int get_delim(int fd, char ** line_ptr, char del) {
 
 enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
-        if (*message_ptr) {
-          free(*message_ptr);
-        }
-        *message_ptr = NULL;
+	if (*message_ptr) {
+		free(*message_ptr);
+	}
+	*message_ptr = NULL;
 
 	char * prefix = NULL;
 	ssize_t prefix_len;
@@ -75,20 +75,25 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 	if (strcmp(prefix, "ERR") == 0) { // ERROR
 
+		free(prefix);
 		*message_ptr = NULL;
-                return (ERR);
+		return (ERR);
 
 	} else if (strcmp(prefix, "EXT") == 0) { // EXIT
 
+		free(prefix);
 		*message_ptr = NULL;
-                return (EXT);
+		return (EXT);
 
 	} else if (strcmp(prefix, "END") == 0) { // END OF TRANSMISSION
 
+		free(prefix);
 		*message_ptr = NULL;
-                return (END);
+		return (END);
 
 	} else if (strcmp(prefix, "CMD") == 0) { // COMMAND
+
+		free(prefix);
 
 		// get the actual command
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
@@ -98,9 +103,11 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 				return (EOF_STREAM);
 
 		// message_ptr already set in get_delim
-                return (CMD);
+		return (CMD);
 
 	} else if (strcmp(prefix, "MSG") == 0) { // MESSAGE
+
+		free(prefix);
 
 		// get length of message
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
@@ -144,11 +151,13 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 	} else { // UNKNOWN PREFIX
 
-			return (FAILURE);
+		free(prefix);
+		return (FAILURE);
 
 	}
 
         // program should never reach this part
+		free(prefix);
         assert(false);
         return (FAILURE);
 
