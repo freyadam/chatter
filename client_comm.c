@@ -58,11 +58,11 @@ void * lines_to_pipe(void * arg) {
 	int allocated, current;
 	char * line;
 	ssize_t wr_read, all_written;
-	
+
 	line = NULL;
-	
+
 	while (true) {
-	   
+
 		current = 0;
 		allocated = 100;
 		line = malloc(allocated);
@@ -70,19 +70,20 @@ void * lines_to_pipe(void * arg) {
 		while (true) {
 
 			// max length of a message, rest will be sent separately
-			if (current >= 5000){
-				printf("Message too long, truncated at 5000 chars\n");
+			if (current >= 5000) {
+				printf("Message too long, truncated at"
+		"5000 chars\n");
 				break;
 			}
-			
+
 			if (current+1 == allocated) {
 				allocated += 100;
 				line = realloc(line, allocated);
 				if (line == NULL) {
 					errx(1, "malloc");
-				} 
+				}
 			}
-			
+
 			line[current++] = getchar();
 
 			if (line[current-1] == '\n') {
@@ -93,8 +94,8 @@ void * lines_to_pipe(void * arg) {
 
 		line[current] = '\0';
 
-		all_written = 0;	   	
-		while( all_written < current ){
+		all_written = 0;
+		while (all_written < current) {
 
 			wr_read = write(*pipe, line+all_written, current);
 
@@ -196,7 +197,7 @@ int run_client(char * server_address, int server_port,
 
 	// initialize pollfd for server
 	init_pollfd_record(&fds[0], server_fd);
-		
+
 	// initialize pollfd for user-input
 	init_pollfd_record(&fds[1], line_pipe[0]);
 
@@ -219,7 +220,7 @@ int process_server_request(int fd) {
 
 	printf("disp\n");
 
-	switch(disp_type){
+	switch (disp_type) {
 	case FAILURE:
 		free(*message_ptr);
 		return (-1);
@@ -258,7 +259,7 @@ int process_client_request(int server_fd, int line_fd) {
 	int result = get_delim(line_fd, &line, '\n');
 	if (result == -1)
 		err(1, "get_delim");
-	
+
 	if (line == strstr(line, "/cmd")) { // line begins with "/cmd"
 
 		if (NULL != strstr(cmd_argument(line), " ")) {
@@ -267,7 +268,7 @@ int process_client_request(int server_fd, int line_fd) {
 			return (0);
 		}
 
-		
+
 		result = send_command(server_fd, cmd_argument(line));
 		free(line);
 		return (result);

@@ -4,21 +4,21 @@
 #define	EOF_IN_STREAM -2
 #define	DELIMITER ' '
 #define	MAX_MSG_LEN_SIZE 6
-#define MSG_PREFIX_LEN 17
+#define	MSG_PREFIX_LEN 17
 
-#define MAX_MSG_LEN 4000
+#define	MAX_MSG_LEN 4000
 
 // FAILURE and EOF_STREAM are not valid types of dispatch
-// but return value that signals unsuccessful retrieval 
+// but return value that signals unsuccessful retrieval
 // of message
 enum dispatch_t {
-  MSG,
-  CMD,
-  ERR,
-  EXT,
-  END,
-  EOF_STREAM,
-  FAILURE};
+	MSG,
+	CMD,
+	ERR,
+	EXT,
+	END,
+	EOF_STREAM,
+	FAILURE};
 
 int get_delim(int fd, char ** line_ptr, char del);
 enum dispatch_t get_dispatch(int fd, char ** message_ptr);

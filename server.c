@@ -81,11 +81,11 @@ void print_server_settings(int server_port) {
 }
 
 void print_usage_and_exit(char * program_name) {
-  fprintf(stderr,
-          "Usage: %s [-c command_list] [-u user_list] [-r room_list] \
-	  <port_number> \n",
-          basename(program_name));
-  exit(1);
+	fprintf(stderr,
+		"Usage: %s [-c command_list] [-u user_list] [-r room_list] \
+		<port_number> \n",
+					basename(program_name));
+	exit(1);
 }
 
 int
@@ -106,27 +106,27 @@ main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "c:u:r:")) != -1)
 		switch (opt) {
 		case 'c':
-			cmd_file = strdup(optarg); 
-                        break;
+			cmd_file = strdup(optarg);
+			break;
 		case 'u':
-			user_file = strdup(optarg); 
-                        break;
+			user_file = strdup(optarg);
+			break;
 		case 'r':
-			room_file = strdup(optarg); 
-                        break;
+			room_file = strdup(optarg);
+			break;
 		case '?':
-                        print_usage_and_exit(argv[0]);
+			print_usage_and_exit(argv[0]);
 		}
 
 
-        if (optind > argc) {
-          exit(1);
-        }
+	if (optind > argc) {
+		exit(1);
+	}
 
 	char * port_arg = argv[optind];
 
 	if (port_arg == NULL) {
-          print_usage_and_exit(argv[0]);
+					print_usage_and_exit(argv[0]);
 	}
 
 	server_port = strtol(port_arg, NULL, 10);

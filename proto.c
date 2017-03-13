@@ -120,13 +120,13 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 		int msg_length = strtol(*message_ptr, NULL, 10);
 		if (msg_length == 0 && errno == EINVAL)
-                  return (FAILURE);
+		return (FAILURE);
 
 		free(*message_ptr);
 
 		*message_ptr = malloc(msg_length+1);
 		if (message_ptr == NULL)
-                  return (FAILURE);
+		return (FAILURE);
 
 		// get the actual message
 		int chars_read = 0;
@@ -149,7 +149,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 		// message_ptr already set previously
 
-                return (MSG);
+								return (MSG);
 
 	} else { // UNKNOWN PREFIX
 
@@ -175,16 +175,16 @@ int get_message(int fd, char ** contents_ptr) {
 
 	enum dispatch_t type = get_dispatch(fd, contents_ptr);
 
-        switch(type){
-        case FAILURE:
-          return (-1);
-        case EOF_STREAM:
-          return (EOF_IN_STREAM);
-        case MSG:
-          break;
-        default:
-          return (-1);
-        }
+				switch (type) {
+				case FAILURE:
+					return (-1);
+				case EOF_STREAM:
+					return (EOF_IN_STREAM);
+				case MSG:
+					break;
+				default:
+					return (-1);
+				}
 
 	return (0);
 
@@ -233,20 +233,21 @@ int send_message(int fd, char * message) {
 
 int send_message_f(int fd, char * format, ...) {
 
-  char formatted_message[MAX_MSG_LEN];
+	char formatted_message[MAX_MSG_LEN];
 
-  va_list args;
-  va_start(args, format);
+	va_list args;
+	va_start(args, format);
 
-  int chars_written = vsnprintf(formatted_message, MAX_MSG_LEN, format, args);
-  if (chars_written < 0 || chars_written > MAX_MSG_LEN)
-    return (-1);
+	int chars_written = vsnprintf(formatted_message,
+		MAX_MSG_LEN, format, args);
+	if (chars_written < 0 || chars_written > MAX_MSG_LEN)
+		return (-1);
 
-  send_message(fd, formatted_message);
-  
-  va_end(args);
+	send_message(fd, formatted_message);
 
-  return (0);
+	va_end(args);
+
+	return (0);
 }
 
 int send_command(int fd, char * cmd) {
@@ -328,9 +329,10 @@ int send_message_from_file(int fd, char * file_path) {
 	if (lseek(fildes, 0, SEEK_SET) == -1) // set file offset to start again
 		err(1, "lseek");
 
-	if (length_of_file >= 10000){
-		send_message(fd, "Failed to send message from file, file was too long.");
-		return (-1);	
+	if (length_of_file >= 10000) {
+		send_message(fd,
+		"Failed to send message from file, file was too long.");
+		return (-1);
 	}
 
 	// write header

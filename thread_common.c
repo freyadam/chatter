@@ -51,8 +51,9 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	close((*fds)[client_no].fd);
 
 	for (i = 2; i < *fds_size; i++) {
-		if (i != client_no) {		
-			send_message_f((*fds)[i].fd, "User %s left the room.", (*names)[client_no]);
+		if (i != client_no) {
+			send_message_f((*fds)[i].fd,
+		"User %s left the room.", (*names)[client_no]);
 		}
 	}
 
@@ -62,7 +63,7 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	}
 
 	(*fds_size)--;
-	
+
 	*fds = realloc(*fds, sizeof (struct pollfd) * (*fds_size));
 	if (*fds == NULL)
 		err(1, "realloc");
@@ -85,8 +86,8 @@ void process_priority_request(struct comm_block * room_info, char * room_name) {
 	int client_no;
 	enum dispatch_t type = get_dispatch(fds[0].fd, &message);
 
-        if (type == FAILURE || type == EOF_STREAM)
-          err(1,"process_priority_request");
+				if (type == FAILURE || type == EOF_STREAM)
+					err(1, "process_priority_request");
 
 	if (type == MSG)
 		printf("Priority message received in %s: %s\n",

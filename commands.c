@@ -124,20 +124,23 @@ void list_commands() {
 
 static int perform_command_aux(int fd, char * cmd, char * room_name) {
 
-        int tmp_str_len = strlen("/tmp/") + 6 + strlen(room_name) + 1;
+	int tmp_str_len = strlen("/tmp/")
+		+ 6 + strlen(room_name) + 1;
 	char * temp = malloc(tmp_str_len);
-        if (temp == NULL) {
-          err(1, "malloc - perform_command_aux");
-        }
+	if (temp == NULL) {
+		err(1, "malloc - perform_command_aux");
+	}
 
-        snprintf(temp, tmp_str_len, "/tmp/%d_%s", getpid(), room_name);
+	snprintf(temp, tmp_str_len, "/tmp/%d_%s",
+		getpid(), room_name);
 
 	// combination of pid and room name is unique
-        int arg_str_len = strlen(cmd) + 3 + strlen(temp) + 1;
-		char * arg = malloc(arg_str_len);
-		if (arg == NULL) {
-				err(1, "malloc - perform_command_aux");
-		}
+	int arg_str_len = strlen(cmd) + 3
+		+ strlen(temp) + 1;
+	char * arg = malloc(arg_str_len);
+	if (arg == NULL) {
+		err(1, "malloc - perform_command_aux");
+	}
 
 	snprintf(arg, arg_str_len,
 		"%s > %s", cmd, temp);

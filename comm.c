@@ -5,8 +5,10 @@
 #include "thread_common.h"
 #include "commands.h"
 
-static void process_comm_request(struct comm_block * room_info,  char * room_name);
-static void process_client_request(struct comm_block * room_info, int client_no);
+static void process_comm_request(struct comm_block * room_info,
+		char * room_name);
+static void process_client_request(struct comm_block * room_info,
+		int client_no);
 
 void poll_cycle(struct comm_block * room_info, char * room_name) {
 
@@ -55,13 +57,13 @@ void * run_comm_thread(void * arg_struct) {
 	char * room_name = args->data_ptr->name;
 
 	free(args);
-	
+
 	int fds_size = 2; // priority channel + thread communication channel
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
 	struct comm_block room_info;
-	
-	//initialize comm_block
+
+	// initialize comm_block
 	room_info.fds = &fds;
 	room_info.names = &names;
 	room_info.size = &fds_size;
@@ -87,7 +89,8 @@ void * run_comm_thread(void * arg_struct) {
 
 }
 
-static void process_comm_request(struct comm_block * room_info, char * room_name) {
+static void process_comm_request(struct comm_block * room_info,
+		char * room_name) {
 
 	int new_fd;
 	char * message, * new_username;
@@ -112,7 +115,7 @@ static void process_comm_request(struct comm_block * room_info, char * room_name
 		new_fd = strtol(message, NULL, 10);
 		if (new_fd == 0 && errno == EINVAL)
 			err(1, "strtol");
-        }
+				}
 
 	printf("New client: %s -- its fd: %d\n", new_username, new_fd);
 
@@ -126,7 +129,8 @@ static void process_comm_request(struct comm_block * room_info, char * room_name
 }
 
 
-static void process_client_request(struct comm_block * room_info, int client_no) {
+static void process_client_request(struct comm_block * room_info,
+		int client_no) {
 
 	int i, client_fd;
 	char * message;
@@ -151,41 +155,42 @@ static void process_client_request(struct comm_block * room_info, int client_no)
 
 		printf("Dispatch received\n");
 
-                switch(type){
-                case ERR:
-                  send_message(client_fd, "Error message received.");
-                  break;
-                case EXT:
-                  transfer_client(thread_list->comm_fd,
-    room_info, client_no);
-                  break;
-                case END:
-                  // end connection
-                  printf("Closing connection for client %d\n", client_no);
-                  delete_client(room_info, client_no);
-                  break;
-                case CMD:                  
-                  printf("%s\n", message);
+		switch (type) {
+		case ERR:
+			send_message(client_fd, "Error message received.");
+			break;
+		case EXT:
+			transfer_client(thread_list->comm_fd,
+							room_info, client_no);
+			break;
+		case END:
+			// end connection
+			printf("Closing connection for client %d\n", client_no);
+			delete_client(room_info, client_no);
+			break;
+		case CMD:
+			printf("%s\n", message);
 
-                  // perform cmd
-                  char * cmd = get_command(message);
-                  if (cmd == NULL) {
-                    send_message(client_fd, "Command not found.");
-                  } else {
-                    perform_command(client_fd, cmd,
-                                    (*names)[0]); // name of room
-                  }
-                  break;
-                case MSG:
-                  // send message to all the other clients
-                  for (i = 2; i < *fds_size; i++) {
-                    if (i != client_no)
-                      send_message_f((*fds)[i].fd, "<%s> %s", (*names)[client_no], message);
-                  }
-                  break;
-                default:
-                  assert(false);
-                }
+			// perform cmd
+			char * cmd = get_command(message);
+			if (cmd == NULL) {
+				send_message(client_fd, "Command not found.");
+			} else {
+				perform_command(client_fd, cmd,
+		(*names)[0]); // name of room
+			}
+			break;
+		case MSG:
+			// send message to all the other clients
+			for (i = 2; i < *fds_size; i++) {
+				if (i != client_no)
+		send_message_f((*fds)[i].fd, "<%s> %s",
+		(*names)[client_no], message);
+			}
+			break;
+		default:
+			assert(false);
+		}
 
 		// release allocated resources
 		if (message != NULL)
@@ -247,8 +252,9 @@ int add_client(struct comm_block * room_info,
 	send_info_to_new_user(room_info, room_name);
 
 	// send message to others as well
-	for (i = 2; i < *fds_size; i++) {                   
-          send_message_f((*fds_ptr)[i].fd, "New user connected: %s", user_name);
+	for (i = 2; i < *fds_size; i++) {
+					send_message_f((*fds_ptr)[i].fd,
+		"New user connected: %s", user_name);
 	}
 
 	(*fds_size)++;

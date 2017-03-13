@@ -150,7 +150,7 @@ pthread_t create_accept_thread(int server_port) {
 
 	pthread_t accept_thread;
 
-	int * port_ptr = malloc(sizeof(int));
+	int * port_ptr = malloc(sizeof (int));
 	*port_ptr = server_port;
 	pthread_create(&accept_thread,
 		NULL, &run_accept_thread, (void *)port_ptr);
