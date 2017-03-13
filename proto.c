@@ -20,8 +20,10 @@ int get_delim(int fd, char ** line_ptr, char del) {
 		if (position >= line_len - 1) {
 			line_len += 10;
 			line = realloc(line, line_len);
-			if (line == NULL)
-					return (-1);
+			if (line == NULL) {
+				free(line);
+				return (-1);
+			}
 		}
 
 		line[position++] = c;
@@ -33,7 +35,8 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	}
 
 	if (err_read == -1) {
-				return (-1);
+		free(line);
+		return (-1);
 		}
 
 	*line_ptr = line;
@@ -42,8 +45,10 @@ int get_delim(int fd, char ** line_ptr, char del) {
 		if (position >= line_len - 1) {
 			line_len += 1;
 			line = realloc(line, line_len);
-			if (line == NULL)
-					return (-1);
+			if (line == NULL) {
+				free(line);
+				return (-1);
+			}
 		}
 
 		line[++position] = '\0';
@@ -66,12 +71,16 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 	// get prefix
 	prefix_len = get_delim(fd, &prefix, DELIMITER);
 
-	if (prefix_len == 0)
-			return (EOF_STREAM);
-	else if (prefix_len == -1)
-			return (FAILURE);
-	else if (prefix_len != 3)
-			return (FAILURE);
+	if (prefix_len == 0) {
+		free(prefix);
+		return (EOF_STREAM);		
+	} else if (prefix_len == -1) {
+		free(prefix);
+		return (FAILURE);
+	} else if (prefix_len != 3) {
+		free(prefix);
+		return (FAILURE);
+	}
 
 	if (strcmp(prefix, "ERR") == 0) { // ERROR
 
@@ -357,6 +366,8 @@ int send_message_from_file(int fd, char * file_path) {
 		err(1, "read");
 
 	free(buffer);
+
+	close(fildes);
 
 	// finish message
 	if (send_dispatch(fd, " ") != 0)

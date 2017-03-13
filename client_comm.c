@@ -4,6 +4,7 @@
 #include "client_comm.h"
 #include "thread_common.h"
 
+
 void init_hints(struct addrinfo * hints_ptr) {
 
 	bzero(hints_ptr, sizeof (*hints_ptr));
@@ -52,14 +53,23 @@ int get_connected_socket(char * server_address, unsigned short server_port) {
 
 }
 
+static void lines_to_pipe_cleanup(void * arg) {
+
+	char * line = *((char **) arg);
+	free(line);   
+
+}
+
 void * lines_to_pipe(void * arg) {
 
 	int * pipe = (int *) arg;
 	int allocated, current;
 	char * line;
 	ssize_t wr_read, all_written;
-
+	
 	line = NULL;
+
+	pthread_cleanup_push(&lines_to_pipe_cleanup, (void *) &line);
 
 	while (true) {
 
@@ -110,6 +120,8 @@ void * lines_to_pipe(void * arg) {
 
 	}
 
+	pthread_cleanup_pop(NULL);
+
 	close(*pipe);
 
 	return (NULL);
@@ -133,42 +145,45 @@ void set_sigint_handler() {
 
 }
 
-void poll_cycle(struct pollfd ** fds_ptr) {
+void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 
 	int err_poll, result;
 	struct pollfd * fds = *fds_ptr;
 
-		err_poll = poll(fds, 2, -1);
-		if (err_poll == -1 && errno == EINTR) {
-			send_end(fds[0].fd);
-			printf("Exiting...\n");
+	err_poll = poll(fds, 2, -1);
+	if (err_poll == -1 && errno == EINTR) {
+		send_end(fds[0].fd);
+		printf("Exiting...\n");
+		pthread_cancel(line_thread);
+		pthread_join(line_thread, NULL);
+		exit(0);
+	} else if (err_poll == -1)
+		err(1, "poll");
 
+	// input from server
+	if (fds[0].revents & POLLIN) {
+
+		result = process_server_request(fds[0].fd);
+
+		if (result == EOF_IN_STREAM) {			
+			printf("End of transmission\n");
+			pthread_cancel(line_thread);
+			pthread_join(line_thread, NULL);
 			exit(0);
-		} else if (err_poll == -1)
-			err(1, "poll");
+		} else if (result == -1)
+			errx(1, "process_server_request");
 
-		// input from server
-		if (fds[0].revents & POLLIN) {
+	}
 
-			result = process_server_request(fds[0].fd);
+	// input from client
+	if (fds[1].revents & POLLIN) {
 
-			if (result == EOF_IN_STREAM) {
-				printf("End of transmission\n");
-				exit(0);
-			} else if (result == -1)
-				errx(1, "process_server_request");
+		result = process_client_request(fds[0].fd, fds[1].fd);
 
-		}
+		if (result == -1)
+			errx(1, "process_client_request");
 
-		// input from client
-		if (fds[1].revents & POLLIN) {
-
-			result = process_client_request(fds[0].fd, fds[1].fd);
-
-			if (result == -1)
-				errx(1, "process_client_request");
-
-		}
+	}
 
 }
 
@@ -203,7 +218,7 @@ int run_client(char * server_address, int server_port,
 
 	while (true) {
 
-		poll_cycle(&fds);
+		poll_cycle(&fds, get_line_thread);
 
 	}
 
@@ -213,18 +228,19 @@ int run_client(char * server_address, int server_port,
 int process_server_request(int fd) {
 
 
-	char * msg = NULL;
-	char ** message_ptr = &msg;
+	char * message;
 
-	enum dispatch_t disp_type = get_dispatch(fd, message_ptr);
-
+	enum dispatch_t disp_type = get_dispatch(fd, &message);
+   
 	switch (disp_type) {
 	case FAILURE:
-		free(*message_ptr);
+		free(message);
 		return (-1);
+		break;
 	case EOF_STREAM:
-		free(*message_ptr);
+		free(message);
 		return (EOF_IN_STREAM);
+		break;
 	case ERR:
 		printf("ERR\n");
 		break;
@@ -236,13 +252,13 @@ int process_server_request(int fd) {
 		return (EOF_IN_STREAM);
 	case CMD:
 		send_end(fd);
-		free(*message_ptr);
+		free(message);
 		return (-1);
 	case MSG:
-		printf("%s\n", *message_ptr);
+		printf("%s\n", message);
+		free(message);
 	}
 
-	free(*message_ptr);
 	return (0);
 
 }

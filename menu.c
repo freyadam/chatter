@@ -27,6 +27,8 @@ void * run_menu_thread(void * arg_struct) {
 
 	struct comm_block room_info;
 
+	end_of_thread = false;
+
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds[0], priority_fd);
 	names[0] = "priority";
@@ -42,7 +44,7 @@ void * run_menu_thread(void * arg_struct) {
 
 	int err_poll, client_no;
 
-	while (true) {
+	while (!end_of_thread) {
 
 		if ((err_poll = poll(fds, fds_size, -1)) < 0)
 			errx(1, "poll");
@@ -73,6 +75,9 @@ void * run_menu_thread(void * arg_struct) {
 		}
 
 	}
+
+	free(fds);
+	free(names);
 
 	pthread_exit(NULL);
 
@@ -127,6 +132,8 @@ void create_menu_thread() {
 	if (pthread_create(&(thr_ptr->id),
 		NULL, &run_menu_thread, (void *) args) != 0)
 		errx(1, "pthread_create");
+
+	pthread_detach(thr_ptr->id);
 
 }
 
@@ -309,6 +316,14 @@ static void process_client_request(struct comm_block * room_info,
 			} else
 				send_message(client_fd,
 		"Failed to add new user");
+
+			if (username != NULL) {
+				free(username);
+			}
+
+			if (passwd != NULL) {
+				free(passwd);
+			}
 
 		} else if (strcmp(message, "c") == 0) {
 

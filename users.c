@@ -20,7 +20,8 @@ static int load_users_from_file_aux(char * filename) {
 	while (users != NULL) { // delete current user list
 
 		new = users->next;
-
+		free(users->username);
+		free(users->passwd);
 		free(users);
 
 		users = new;

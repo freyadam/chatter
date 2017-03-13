@@ -69,6 +69,19 @@ void run_server(int server_port) {
 	if (pthread_mutex_destroy(&thr_list_mx) != 0)
 		errx(1, "pthread_mutex_destroy");
 
+	/*
+	user_pass_str * next, * user = users;
+	while (user != NULL) {
+		free(user->username);
+		free(user->passwd);
+		next = user->next;
+		free(user);
+		user = next;
+	}
+	*/
+
+	sleep(1);	
+
 }
 
 void print_server_settings(int server_port) {

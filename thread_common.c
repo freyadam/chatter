@@ -3,6 +3,8 @@
 #include "proto.h"
 #include "thread_common.h"
 
+__thread int end_of_thread;
+
 void init_pollfd_record(struct pollfd * fd_ptr, int fd) {
 
 	fd_ptr->fd = fd;
@@ -18,8 +20,11 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 	int * fds_size = room_info->size;
 
 	int i, client_fd = (*fds)[client_no].fd;
-
+	
 	send_message(room_fd, (*names)[client_no]);
+
+	free((*names)[client_no]);
+
 	send_message_f(room_fd, "%d", client_fd);
 	for (i = client_no+1; i < *fds_size; i++) {
 		(*fds)[i-1] = (*fds)[i];
@@ -27,6 +32,7 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 	}
 
 	(*fds_size)--;
+	
 
 	*fds = realloc(*fds, sizeof (struct pollfd) * (*fds_size));
 	if (*fds == NULL)
@@ -49,6 +55,7 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	char * client_name = malloc(client_name_str_len);
 
 	close((*fds)[client_no].fd);
+	free((*names)[client_no]);
 
 	for (i = 2; i < *fds_size; i++) {
 		if (i != client_no) {
@@ -86,8 +93,8 @@ void process_priority_request(struct comm_block * room_info, char * room_name) {
 	int client_no;
 	enum dispatch_t type = get_dispatch(fds[0].fd, &message);
 
-				if (type == FAILURE || type == EOF_STREAM)
-					err(1, "process_priority_request");
+	if (type == FAILURE || type == EOF_STREAM)
+		err(1, "process_priority_request");
 
 	if (type == MSG)
 		printf("Priority message received in %s: %s\n",
@@ -101,8 +108,7 @@ void process_priority_request(struct comm_block * room_info, char * room_name) {
 		client_no++) { // send end to all clients
 			send_end(fds[client_no].fd);
 		}
-		free(message);
-		pthread_exit(NULL);
+		end_of_thread = true;
 	}
 
 	free(message);

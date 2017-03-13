@@ -155,5 +155,7 @@ pthread_t create_accept_thread(int server_port) {
 	pthread_create(&accept_thread,
 		NULL, &run_accept_thread, (void *)port_ptr);
 
+	pthread_detach(accept_thread);
+
 	return (accept_thread);
 }

@@ -58,6 +58,8 @@ void * run_comm_thread(void * arg_struct) {
 
 	free(args);
 
+	end_of_thread = false;
+
 	int fds_size = 2; // priority channel + thread communication channel
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
@@ -76,7 +78,7 @@ void * run_comm_thread(void * arg_struct) {
 	init_pollfd_record(&fds[1], comm_fd);
 	names[1] = "comm";
 
-	while (true) {
+	while (!end_of_thread) {
 
 		poll_cycle(&room_info, room_name);
 
@@ -311,5 +313,7 @@ void create_comm_thread(char * name) {
 	if (pthread_create(&(thr_ptr->id), NULL, &run_comm_thread,
 		(void *) args) != 0)
 		errx(1, "pthread_create");
+
+	pthread_detach(thr_ptr->id);
 
 }
