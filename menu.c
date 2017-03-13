@@ -6,10 +6,8 @@
 #include "rooms.h"
 #include "users.h"
 
-static void process_comm_request(struct pollfd ** fds,
-		char *** names, int * fds_size, char * room_name);
-static void process_client_request(struct pollfd ** fds,
-		char *** names, int * fds_size, int client_no);
+static void process_comm_request(struct comm_block * room_info, char * room_name);
+static void process_client_request(struct comm_block * room_info, int client_no);
 
 void * run_menu_thread(void * arg_struct) {
 
@@ -25,6 +23,8 @@ void * run_menu_thread(void * arg_struct) {
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
 
+	struct comm_block room_info;
+
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds[0], priority_fd);
 	names[0] = "priority";
@@ -32,6 +32,11 @@ void * run_menu_thread(void * arg_struct) {
 	// initialize pollfd for thread communication channel
 	init_pollfd_record(&fds[1], comm_fd);
 	names[1] = "comm";
+
+	// initialize room_info
+	room_info.fds = &fds;
+	room_info.names = &names;
+	room_info.size = &fds_size;
 
 	int err_poll, client_no;
 
@@ -43,15 +48,14 @@ void * run_menu_thread(void * arg_struct) {
 		// priority channel
 		if (fds[0].revents & POLLIN) {
 
-			process_priority_request(fds, fds_size, room_name);
+			process_priority_request(&room_info, room_name);
 
 		}
 
 		// communication between threads
 		if (fds[1].revents & POLLIN) {
 
-			process_comm_request(&fds, &names,
-		&fds_size, room_name);
+			process_comm_request(&room_info, room_name);
 
 		}
 
@@ -60,8 +64,7 @@ void * run_menu_thread(void * arg_struct) {
 
 			if (fds[client_no].revents & POLLIN) {
 
-				process_client_request(&fds,
-		&names, &fds_size, client_no);
+				process_client_request(&room_info, client_no);
 
 			}
 
@@ -168,8 +171,11 @@ void print_info_to_new_client(int fd) {
 
 }
 
-int add_client_to_menu(struct pollfd ** fds_ptr,
-		char *** names, int * fds_size, char * username, int fd) {
+int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
+
+	struct pollfd ** fds_ptr = room_info->fds;
+	char *** names = room_info->names;
+	int * fds_size = room_info->size;
 
 	*fds_ptr = (struct pollfd *) realloc(*fds_ptr,
 		sizeof (struct pollfd) * ((*fds_size)+1));
@@ -193,34 +199,35 @@ int add_client_to_menu(struct pollfd ** fds_ptr,
 
 }
 
-static void process_comm_request(struct pollfd ** fds,
-		char *** names, int * fds_size, char * room_name) {
+static void process_comm_request(struct comm_block * room_info, char * room_name) {
 
+	struct pollfd ** fds = room_info->fds;
+	
 	int new_fd;
 	char * message, * new_username;
 	message = NULL;
 
-        // add new client
-        enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
-        if (type != MSG) {
-          errx(1, "get_dispatch");
-        }
+	// add new client
+	enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
+	if (type != MSG) {
+		errx(1, "get_dispatch");
+	}
 	       
 	new_username = strdup(message);
 
-        type = get_dispatch((*fds)[1].fd, &message);
+	type = get_dispatch((*fds)[1].fd, &message);
 	if ( type == MSG) {
-          new_fd = strtol(message, NULL, 10);
-          if (new_fd == 0 && errno == EINVAL)
+		new_fd = strtol(message, NULL, 10);
+		if (new_fd == 0 && errno == EINVAL)
             err(1, "strtol");
-        } else {
-          errx(1, "get_dispatch");
-        }
+	} else {
+		errx(1, "get_dispatch");
+	}
 
 	printf("New client: %s -- %d\n", new_username, new_fd);
 
 	// add the new client
-	add_client_to_menu(fds, names, fds_size, new_username, new_fd);
+	add_client_to_menu(room_info, new_username, new_fd);
 
 	// free(new_username);
 
@@ -231,8 +238,10 @@ static void process_comm_request(struct pollfd ** fds,
 }
 
 
-static void process_client_request(struct pollfd ** fds,
-		char *** names, int * fds_size, int client_no) {
+static void process_client_request(struct comm_block * room_info, int client_no) {
+
+
+	struct pollfd ** fds = room_info->fds;
 
 	int client_fd;
 	char * message;
@@ -266,7 +275,7 @@ static void process_client_request(struct pollfd ** fds,
         case END:
           // end connection
           printf("Closing connection for client %d\n", client_no);
-          delete_client(fds, names, fds_size, client_no);
+          delete_client(room_info, client_no);
           break;
         case CMD:
           // perform cmd
@@ -336,7 +345,7 @@ static void process_client_request(struct pollfd ** fds,
             // transfer client to the chat room
             printf("%s\n", thr_ptr->name);
             if (transfer_client(thr_ptr->comm_fd,
-                                fds, names, fds_size, client_no) != 0)
+                                room_info, client_no) != 0)
               errx(1, "transfer_client");
 
           }

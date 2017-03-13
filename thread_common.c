@@ -11,8 +11,11 @@ void init_pollfd_record(struct pollfd * fd_ptr, int fd) {
 
 }
 
-int transfer_client(int room_fd, struct pollfd ** fds,
-		char *** names, int * fds_size, int client_no) {
+int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
+
+	struct pollfd ** fds = room_info->fds;
+	char *** names = room_info->names;
+	int * fds_size = room_info->size;
 
 	int i, client_fd = (*fds)[client_no].fd;
 
@@ -36,8 +39,11 @@ int transfer_client(int room_fd, struct pollfd ** fds,
 	return (0);
 }
 
-int delete_client(struct pollfd ** fds, char *** names,
-		int * fds_size, int client_no) {
+int delete_client(struct comm_block * room_info, int client_no) {
+
+	struct pollfd ** fds = room_info->fds;
+	char *** names = room_info->names;
+	int * fds_size = room_info->size;
 
 	int i, client_name_str_len = 50 + strlen((*names)[client_no]);
 	char * client_name = malloc(client_name_str_len);
@@ -66,10 +72,12 @@ int delete_client(struct pollfd ** fds, char *** names,
 	return (0);
 }
 
-void process_priority_request(struct pollfd * fds,
-		int fds_size, char * room_name) {
+void process_priority_request(struct comm_block * room_info, char * room_name) {
 
-        char * message = NULL;
+	struct pollfd * fds = *(room_info->fds);
+	int fds_size = *(room_info->size);
+
+	char * message = NULL;
 	int client_no;
 	enum dispatch_t type = get_dispatch(fds[0].fd, &message);
 

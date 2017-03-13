@@ -5,33 +5,30 @@
 #include "thread_common.h"
 #include "commands.h"
 
-static void process_comm_request(struct pollfd ** fds,
-		char *** names, int * fds_size, char * room_name);
-static void process_client_request(struct pollfd ** fds,
-		char *** names, int * fds_size, int client_no);
+static void process_comm_request(struct comm_block * room_info,  char * room_name);
+static void process_client_request(struct comm_block * room_info, int client_no);
 
-void poll_cycle(struct pollfd ** fds_ptr, char *** names_ptr,
-		int * fds_size_ptr, char * room_name) {
+void poll_cycle(struct comm_block * room_info, char * room_name) {
 
-	int err_poll, client_no;
+	struct pollfd ** fds_ptr = room_info->fds;
+	int * fds_size_ptr = room_info->size;
 
-	if ((err_poll = poll((*fds_ptr),
-		(*fds_size_ptr), -1)) < 0)
+	int client_no;
+
+	if (poll((*fds_ptr), (*fds_size_ptr), -1) < 0)
 		errx(1, "poll");
 
 	// priority channel
 	if ((*fds_ptr)[0].revents & POLLIN) {
 
-		process_priority_request((*fds_ptr),
-		(*fds_size_ptr), room_name);
+		process_priority_request(room_info, room_name);
 
 	}
 
 	// communication between threads
 	if ((*fds_ptr)[1].revents & POLLIN) {
 
-		process_comm_request(fds_ptr,
-		names_ptr, fds_size_ptr, room_name);
+		process_comm_request(room_info, room_name);
 
 	}
 
@@ -41,8 +38,7 @@ void poll_cycle(struct pollfd ** fds_ptr, char *** names_ptr,
 		if ((*fds_ptr)[client_no].revents & POLLIN) {
 
 
-			process_client_request(fds_ptr,
-		names_ptr, fds_size_ptr, client_no);
+			process_client_request(room_info, client_no);
 
 		}
 
@@ -59,10 +55,16 @@ void * run_comm_thread(void * arg_struct) {
 	char * room_name = args->data_ptr->name;
 
 	free(args);
-
+	
 	int fds_size = 2; // priority channel + thread communication channel
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
+	struct comm_block room_info;
+	
+	//initialize comm_block
+	room_info.fds = &fds;
+	room_info.names = &names;
+	room_info.size = &fds_size;
 
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds[0], priority_fd);
@@ -74,7 +76,7 @@ void * run_comm_thread(void * arg_struct) {
 
 	while (true) {
 
-		poll_cycle(&fds, &names, &fds_size, room_name);
+		poll_cycle(&room_info, room_name);
 
 	}
 
@@ -85,24 +87,25 @@ void * run_comm_thread(void * arg_struct) {
 
 }
 
-static void process_comm_request(struct pollfd ** fds,
-		char *** names, int * fds_size, char * room_name) {
+static void process_comm_request(struct comm_block * room_info, char * room_name) {
 
 	int new_fd;
 	char * message, * new_username;
 	message = NULL;
 
+	struct pollfd ** fds = room_info->fds;
+
 	// add new client
-        enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
+	enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
 	if (type != MSG)
 		errx(1, "process_comm_request");
 
 	new_username = strdup(message);
 
-        free(message);
+	free(message);
 	message = NULL;
 
-        type = get_dispatch((*fds)[1].fd, &message);
+	type = get_dispatch((*fds)[1].fd, &message);
 	if (type != MSG)
 		errx(1, "process_comm_request");
 	else {
@@ -114,7 +117,7 @@ static void process_comm_request(struct pollfd ** fds,
 	printf("New client: %s -- its fd: %d\n", new_username, new_fd);
 
 	// add the new client
-	add_client(fds, names, fds_size, new_fd, new_username, room_name);
+	add_client(room_info, new_fd, new_username, room_name);
 
 	// free(new_username);
 
@@ -125,13 +128,16 @@ static void process_comm_request(struct pollfd ** fds,
 }
 
 
-static void process_client_request(struct pollfd ** fds,
-		char *** names, int * fds_size, int client_no) {
+static void process_client_request(struct comm_block * room_info, int client_no) {
 
-        int i, client_fd, resend_msg_str_len;
-	char * message, * resend_msg;
+	int i, client_fd;
+	char * message;
 
-        printf("Processing client request\n");
+	struct pollfd ** fds = room_info->fds;
+	char *** names = room_info->names;
+	int * fds_size = room_info->size;
+
+	printf("Processing client request\n");
 
 	message = NULL;
 	client_fd = (*fds)[client_no].fd;
@@ -155,12 +161,12 @@ static void process_client_request(struct pollfd ** fds,
                   break;
                 case EXT:
                   transfer_client(thread_list->comm_fd,
-    fds, names, fds_size, client_no);
+    room_info, client_no);
                   break;
                 case END:
                   // end connection
                   printf("Closing connection for client %d\n", client_no);
-                  delete_client(fds, names, fds_size, client_no);
+                  delete_client(room_info, client_no);
                   break;
                 case CMD:                  
                   printf("%s\n", message);
@@ -176,16 +182,9 @@ static void process_client_request(struct pollfd ** fds,
                   break;
                 case MSG:
                   // send message to all the other clients
-                  resend_msg_str_len = 1 + 4 + 2 + strlen(message) + 1;
-                  resend_msg = malloc(resend_msg_str_len);
-                  if (resend_msg == NULL)
-                    err(1, "malloc");
-                  snprintf(resend_msg,
-                           resend_msg_str_len,
-                           "<%s> %s", (*names)[client_no], message);
                   for (i = 2; i < *fds_size; i++) {
                     if (i != client_no)
-                      send_message((*fds)[i].fd, resend_msg);
+                      send_message_f((*fds)[i].fd, "<%s> %s", (*names)[client_no], message);
                   }
                   break;
                 default:
@@ -200,10 +199,14 @@ static void process_client_request(struct pollfd ** fds,
 
 }
 
-void send_info_to_new_user(struct pollfd ** fds_ptr, char *** names,
-		int * fds_size, char * room_name) {
+void send_info_to_new_user(struct comm_block * room_info, char * room_name) {
 
 	int i, fd;
+
+	struct pollfd ** fds_ptr = room_info->fds;
+	char *** names = room_info->names;
+	int * fds_size = room_info->size;
+
 	fd = (*fds_ptr)[*fds_size].fd;
 
 	send_message_f(fd, "----- Connected to room %s -----", room_name);
@@ -223,8 +226,12 @@ void send_info_to_new_user(struct pollfd ** fds_ptr, char *** names,
 
 }
 
-int add_client(struct pollfd ** fds_ptr, char *** names, int * fds_size,
+int add_client(struct comm_block * room_info,
 		int fd, char * user_name, char * room_name) {
+
+	struct pollfd ** fds_ptr = room_info->fds;
+	char *** names = room_info->names;
+	int * fds_size = room_info->size;
 
 	char * name = malloc(50 + strlen(user_name));
 	int i;
@@ -242,7 +249,7 @@ int add_client(struct pollfd ** fds_ptr, char *** names, int * fds_size,
 	(*names)[*fds_size] = user_name;
 
 	// send chatroom info to new user
-	send_info_to_new_user(fds_ptr, names, fds_size, room_name);
+	send_info_to_new_user(room_info, room_name);
 
 	// send message to others as well
 	for (i = 2; i < *fds_size; i++) {                   
