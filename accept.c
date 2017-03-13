@@ -58,6 +58,8 @@ int get_listening_socket(unsigned short server_port) {
 
 	}
 
+	freeaddrinfo(result);
+
 	if (addr_info == NULL)
 		err(1, "no valid gettaddrinfo result");
 

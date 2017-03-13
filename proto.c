@@ -122,6 +122,8 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		if (msg_length == 0 && errno == EINVAL)
                   return (FAILURE);
 
+		free(*message_ptr);
+
 		*message_ptr = malloc(msg_length+1);
 		if (message_ptr == NULL)
                   return (FAILURE);
@@ -156,10 +158,10 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 	}
 
-        // program should never reach this part
-		free(prefix);
-        assert(false);
-        return (FAILURE);
+	// program should never reach this part
+	free(prefix);
+	assert(false);
+	return (FAILURE);
 
 }
 

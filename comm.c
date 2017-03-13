@@ -119,8 +119,6 @@ static void process_comm_request(struct comm_block * room_info, char * room_name
 	// add the new client
 	add_client(room_info, new_fd, new_username, room_name);
 
-	// free(new_username);
-
 	// release allocated resources
 	if (message != NULL)
 		free(message);
@@ -136,8 +134,6 @@ static void process_client_request(struct comm_block * room_info, int client_no)
 	struct pollfd ** fds = room_info->fds;
 	char *** names = room_info->names;
 	int * fds_size = room_info->size;
-
-	printf("Processing client request\n");
 
 	message = NULL;
 	client_fd = (*fds)[client_no].fd;

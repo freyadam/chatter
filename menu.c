@@ -207,7 +207,9 @@ static void process_comm_request(struct comm_block * room_info, char * room_name
 		errx(1, "get_dispatch");
 	}
 	       
-	new_username = message;
+	new_username = strdup(message);
+
+	free(message);
 	message = NULL;
 
 	type = get_dispatch((*fds)[1].fd, &message);
@@ -223,8 +225,6 @@ static void process_comm_request(struct comm_block * room_info, char * room_name
 
 	// add the new client
 	add_client_to_menu(room_info, new_username, new_fd);
-
-	// free(new_username);
 
 	// release allocated resources
 	if (message != NULL)

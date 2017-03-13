@@ -211,33 +211,39 @@ int run_client(char * server_address, int server_port,
 
 int process_server_request(int fd) {
 
-	char * message = NULL;
 
-	enum dispatch_t disp_type = get_dispatch(fd, &message);
+	char * msg = NULL;
+	char ** message_ptr = &msg;
 
-        switch(disp_type){
-        case FAILURE:
-          return (-1);
-        case EOF_STREAM:
-          return (EOF_IN_STREAM);
-        case ERR:
-          printf("ERR\n");
-          break;
-        case EXT:
-          printf("EXT\n");
-          break;
-        case END:
-          return (EOF_IN_STREAM);
-        case CMD:
-          send_end(fd);
-          return (-1);
-        case MSG:
-          printf("%s\n", message);
-        }
+	enum dispatch_t disp_type = get_dispatch(fd, message_ptr);
 
-	if (message != NULL)
-		free(message);
+	printf("disp\n");
 
+	switch(disp_type){
+	case FAILURE:
+		free(*message_ptr);
+		return (-1);
+	case EOF_STREAM:
+		free(*message_ptr);
+		return (EOF_IN_STREAM);
+	case ERR:
+		printf("ERR\n");
+		break;
+	case EXT:
+		printf("EXT\n");
+		break;
+	case END:
+		printf("END\n");
+		return (EOF_IN_STREAM);
+	case CMD:
+		send_end(fd);
+		free(*message_ptr);
+		return (-1);
+	case MSG:
+		printf("%s\n", *message_ptr);
+	}
+
+	free(*message_ptr);
 	return (0);
 
 }
@@ -257,25 +263,31 @@ int process_client_request(int server_fd, int line_fd) {
 
 		if (NULL != strstr(cmd_argument(line), " ")) {
 			printf("Commands cannot contain spaces\n");
+			free(line);
 			return (0);
 		}
 
-		return (send_command(server_fd, cmd_argument(line)));
+		
+		result = send_command(server_fd, cmd_argument(line));
+		free(line);
+		return (result);
 
 	} else if (strcmp(line, "/end") == 0) { // line begins with "/end"
 
+		free(line);
 		return (send_end(server_fd));
 
 	} else if (strcmp(line, "/ext") == 0) { // line begins with "/ext"
 
+		free(line);
 		return (send_exit(server_fd));
 
 	} else { // type of the dispatch is message
 
-		return (send_message(server_fd, line));
+		result = send_message(server_fd, line);
+		free(line);
+		return (result);
 
 	}
-
-	free(line);
 
 }
