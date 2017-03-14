@@ -69,6 +69,38 @@ void run_server(int server_port) {
 	if (pthread_mutex_destroy(&thr_list_mx) != 0)
 		errx(1, "pthread_mutex_destroy");
 
+	struct thread_data * next_thread, * thread = thread_list;
+	while (thread_list != NULL) {
+		free(thread->name);
+		next_thread = thread->next;
+		free(thread);
+		thread = next_thread;
+	}
+
+	free(cmd_file);
+
+	cmd_str * next_cmd, * cmd = commands;
+	while (cmd != NULL) {
+		free(cmd->name);
+		free(cmd->command);
+		next_cmd = cmd->next;
+		free(cmd);
+		cmd = next_cmd;
+	}
+
+	free(user_file);
+
+	user_pass_str * next_usr, * usr = users;
+	while (usr != NULL) {
+		free(usr->username);
+		free(usr->passwd);
+		next_usr = usr->next;
+		free(usr);
+		usr = next_usr;
+	}
+
+	free(room_file);
+
 	sleep(1);
 
 }

@@ -4,6 +4,7 @@
 #include "client_comm.h"
 #include "thread_common.h"
 
+int read_line;
 
 void init_hints(struct addrinfo * hints_ptr) {
 
@@ -53,13 +54,6 @@ int get_connected_socket(char * server_address, unsigned short server_port) {
 
 }
 
-static void lines_to_pipe_cleanup(void * arg) {
-
-	char * line = *((char **) arg);
-	free(line);
-
-}
-
 void * lines_to_pipe(void * arg) {
 
 	int * pipe = (int *) arg;
@@ -69,15 +63,13 @@ void * lines_to_pipe(void * arg) {
 
 	line = NULL;
 
-	pthread_cleanup_push(&lines_to_pipe_cleanup, (void *) &line);
-
-	while (true) {
+	while (read_line) {
 
 		current = 0;
 		allocated = 100;
 		line = malloc(allocated);
 
-		while (true) {
+		while (read_line) {
 
 			// max length of a message, rest will be sent separately
 			if (current >= 5000) {
@@ -94,18 +86,18 @@ void * lines_to_pipe(void * arg) {
 				}
 			}
 
-			line[current++] = getchar();
+			line[current++] = getc(stdin);
 
 			if (line[current-1] == '\n') {
 				break;
 			}
 
-		}
+		}		
 
 		line[current] = '\0';
 
 		all_written = 0;
-		while (all_written < current) {
+		while (read_line && all_written < current) {
 
 			wr_read = write(*pipe, line+all_written, current);
 
@@ -120,7 +112,9 @@ void * lines_to_pipe(void * arg) {
 
 	}
 
-	pthread_cleanup_pop(NULL);
+	printf("Ending\n");
+
+	free(line);
 
 	close(*pipe);
 
@@ -154,8 +148,9 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 	if (err_poll == -1 && errno == EINTR) {
 		send_end(fds[0].fd);
 		printf("Exiting...\n");
-		pthread_cancel(line_thread);
-		pthread_join(line_thread, NULL);
+		read_line = false;
+		free(fds);
+		sleep(1);
 		exit(0);
 	} else if (err_poll == -1)
 		err(1, "poll");
@@ -167,8 +162,9 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 
 		if (result == EOF_IN_STREAM) {
 			printf("End of transmission\n");
-			pthread_cancel(line_thread);
-			pthread_join(line_thread, NULL);
+			read_line = false;
+			free(fds);
+			sleep(1);
 			exit(0);
 		} else if (result == -1)
 			errx(1, "process_server_request");
@@ -193,11 +189,17 @@ int run_client(char * server_address, int server_port,
 	pthread_t get_line_thread;
 	int line_pipe[2];
 
-	int server_fd = get_connected_socket(server_address, server_port);
+	int server_fd = get_connected_socket(server_address, server_port);	
+
+	read_line = true;
 
 	// send auth info
 	send_message(server_fd, username);
 	send_message(server_fd, password);
+
+	free(server_address);
+	free(username);
+	free(password);
 
 	if (pipe(line_pipe) == -1)
 		err(1, "pipe");
@@ -205,6 +207,8 @@ int run_client(char * server_address, int server_port,
 	if (pthread_create(&get_line_thread, NULL,
 		&lines_to_pipe, &(line_pipe[1])) > 0)
 		errx(1, "pthread_create");
+
+	pthread_detach(get_line_thread);
 
 	set_sigint_handler();
 

@@ -17,7 +17,8 @@ void run_signal_thread(pthread_t accept_thread) {
 
 	// kill accepting thread
 	pthread_kill(accept_thread, SIGUSR1);
-
+	pthread_join(accept_thread, NULL);
+	   
 	// kill everyone else
 	if (pthread_mutex_lock(&thr_list_mx) != 0)
 		errx(1, "pthread_mutex_lock");
