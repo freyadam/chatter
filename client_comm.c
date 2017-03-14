@@ -86,7 +86,7 @@ void * lines_to_pipe(void * arg) {
 				}
 			}
 
-			line[current++] = getc(stdin);
+			read(0, line + (current++), 1);
 
 			if (line[current-1] == '\n') {
 				break;
@@ -112,13 +112,9 @@ void * lines_to_pipe(void * arg) {
 
 	}
 
-	printf("Ending\n");
-
-	free(line);
-
 	close(*pipe);
 
-	return (NULL);
+	return NULL;
 }
 
 void client_sigint_handler(int sig) {
@@ -149,9 +145,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 		send_end(fds[0].fd);
 		printf("Exiting...\n");
 		read_line = false;
-		free(fds);
-		sleep(1);
-		exit(0);
+		close(0);
 	} else if (err_poll == -1)
 		err(1, "poll");
 
@@ -163,9 +157,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 		if (result == EOF_IN_STREAM) {
 			printf("End of transmission\n");
 			read_line = false;
-			free(fds);
-			sleep(1);
-			exit(0);
+			close(0);
 		} else if (result == -1)
 			errx(1, "process_server_request");
 
@@ -197,7 +189,6 @@ int run_client(char * server_address, int server_port,
 	send_message(server_fd, username);
 	send_message(server_fd, password);
 
-	free(server_address);
 	free(username);
 	free(password);
 
@@ -207,8 +198,6 @@ int run_client(char * server_address, int server_port,
 	if (pthread_create(&get_line_thread, NULL,
 		&lines_to_pipe, &(line_pipe[1])) > 0)
 		errx(1, "pthread_create");
-
-	pthread_detach(get_line_thread);
 
 	set_sigint_handler();
 
@@ -220,11 +209,17 @@ int run_client(char * server_address, int server_port,
 	// initialize pollfd for user-input
 	init_pollfd_record(&fds[1], line_pipe[0]);
 
-	while (true) {
+	while (read_line) {
 
 		poll_cycle(&fds, get_line_thread);
 
 	}
+
+	free(fds);
+
+	pthread_kill(get_line_thread, SIGINT);
+
+	pthread_join(get_line_thread,NULL);
 
 	return (0);
 }
@@ -238,11 +233,9 @@ int process_server_request(int fd) {
 
 	switch (disp_type) {
 	case FAILURE:
-		free(message);
 		return (-1);
 		break;
 	case EOF_STREAM:
-		free(message);
 		return (EOF_IN_STREAM);
 		break;
 	case ERR:
@@ -285,7 +278,6 @@ int process_client_request(int server_fd, int line_fd) {
 			free(line);
 			return (0);
 		}
-
 
 		result = send_command(server_fd, cmd_argument(line));
 		free(line);

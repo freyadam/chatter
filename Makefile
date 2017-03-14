@@ -2,7 +2,7 @@
 
 CLIENT_SRC=client.c client_comm.c proto.c thread_common.c
 SERVER_SRC=server.c accept.c comm.c menu.c proto.c signal.c thread_common.c users.c rooms.c commands.c
-C_FLAGS=-Wall
+C_FLAGS=-g -Wall
 LD_FLAGS=-pthread
 CC=gcc
 OBJ=$(SRC:.c=.o)

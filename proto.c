@@ -6,9 +6,6 @@
 // without the delimiter (which will be consumed)
 int get_delim(int fd, char ** line_ptr, char del) {
 
-	if ((*line_ptr) != NULL)
-		free(*line_ptr);
-
 	int position, line_len, err_read;
 	line_len = 10;
 	position = 0;
@@ -60,9 +57,6 @@ int get_delim(int fd, char ** line_ptr, char del) {
 
 enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
-	if (*message_ptr) {
-		free(*message_ptr);
-	}
 	*message_ptr = NULL;
 
 	char * prefix = NULL;
@@ -175,10 +169,6 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 }
 
 int get_message(int fd, char ** contents_ptr) {
-
-	if (*contents_ptr != NULL) {
-		free(*contents_ptr);
-	}
 
 	*contents_ptr = NULL;
 
