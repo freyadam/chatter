@@ -82,8 +82,8 @@ void * run_menu_thread(void * arg_struct) {
 		free(*(names+i));
 	}
 	free(names);
-	
-	return NULL;
+
+	return (NULL);
 }
 
 void create_menu_thread() {

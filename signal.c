@@ -18,7 +18,7 @@ void run_signal_thread(pthread_t accept_thread) {
 	// kill accepting thread
 	pthread_kill(accept_thread, SIGUSR1);
 	pthread_join(accept_thread, NULL);
-	   
+
 	// kill everyone else
 	if (pthread_mutex_lock(&thr_list_mx) != 0)
 		errx(1, "pthread_mutex_lock");
@@ -31,16 +31,5 @@ void run_signal_thread(pthread_t accept_thread) {
 		errx(1, "pthread_mutex_unlock");
 
 	printf("Exiting...\n");
-
-	// join with other threads
-	if (pthread_mutex_lock(&thr_list_mx) != 0)
-		errx(1, "pthread_mutex_lock");
-
-	for (thr_ptr = thread_list; thr_ptr != NULL; thr_ptr = thr_ptr->next) {
-		pthread_join(thr_ptr->id, NULL);
-	}
-
-	if (pthread_mutex_unlock(&thr_list_mx) != 0)
-		errx(1, "pthread_mutex_unlock");
 
 }

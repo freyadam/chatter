@@ -92,7 +92,7 @@ void * lines_to_pipe(void * arg) {
 				break;
 			}
 
-		}		
+		}
 
 		line[current] = '\0';
 
@@ -114,7 +114,7 @@ void * lines_to_pipe(void * arg) {
 
 	close(*pipe);
 
-	return NULL;
+	return (NULL);
 }
 
 void client_sigint_handler(int sig) {
@@ -181,7 +181,7 @@ int run_client(char * server_address, int server_port,
 	pthread_t get_line_thread;
 	int line_pipe[2];
 
-	int server_fd = get_connected_socket(server_address, server_port);	
+	int server_fd = get_connected_socket(server_address, server_port);
 
 	read_line = true;
 
@@ -219,7 +219,7 @@ int run_client(char * server_address, int server_port,
 
 	pthread_kill(get_line_thread, SIGINT);
 
-	pthread_join(get_line_thread,NULL);
+	pthread_join(get_line_thread, NULL);
 
 	return (0);
 }

@@ -85,7 +85,7 @@ void * run_comm_thread(void * arg_struct) {
 	}
 
 	free(fds);
-	
+
 	int i;
 	for (i = 2; i < fds_size; i++) {
 		free(*(names+i));
@@ -94,7 +94,7 @@ void * run_comm_thread(void * arg_struct) {
 	free(names);
 	free(room_name);
 
-	return NULL;
+	return (NULL);
 
 }
 
@@ -321,6 +321,6 @@ void create_comm_thread(char * name) {
 		(void *) args) != 0)
 		errx(1, "pthread_create");
 
-	//pthread_detach(thr_ptr->id);
+	// pthread_detach(thr_ptr->id);
 
 }

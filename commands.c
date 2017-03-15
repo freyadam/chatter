@@ -63,7 +63,7 @@ static int load_commands_aux(char * filename) {
 
 		cmd_storage = strdup(cmd);
 		name_storage = strdup(cmd_name);
-		
+
 		cmd_str * new = (cmd_str *)
 		malloc(sizeof (cmd_str));
 		new->name = name_storage;
