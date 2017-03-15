@@ -83,6 +83,8 @@ static int load_commands_aux(char * filename) {
 	if (errno != 0)
 		err(1, "getline");
 
+	fclose(file);
+
 	free(line);
 
 	return (0);

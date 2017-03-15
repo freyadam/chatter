@@ -37,6 +37,8 @@ static int load_rooms_aux(char * filename) {
 
 	free(line);
 
+	fclose(file);
+
 	return (0);
 }
 

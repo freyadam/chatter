@@ -80,6 +80,8 @@ static int load_users_from_file_aux(char * filename) {
 	if (errno != 0)
 		err(1, "getline");
 
+	fclose(file);
+
 	free(line);
 
 	return (0);

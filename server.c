@@ -69,15 +69,25 @@ void run_server(int server_port) {
 	if (pthread_mutex_destroy(&thr_list_mx) != 0)
 		errx(1, "pthread_mutex_destroy");
 
-	struct thread_data * next_thread, * thread = thread_list;
-	while (thread_list != NULL) {
-		free(thread->name);
+	// join with other threads
+	struct thread_data * next_thread, * thread = thread_list;	
+	while (thread != NULL) {
+		pthread_join(thread->id, NULL);
+
+		thread = thread->next;
+	}
+	
+	thread = thread_list;
+	while (thread != NULL) {
+
 		next_thread = thread->next;
+
 		free(thread);
+
 		thread = next_thread;
 	}
 
-	free(cmd_file);
+	//free(cmd_file);
 
 	cmd_str * next_cmd, * cmd = commands;
 	while (cmd != NULL) {
@@ -88,7 +98,7 @@ void run_server(int server_port) {
 		cmd = next_cmd;
 	}
 
-	free(user_file);
+	//free(user_file);
 
 	user_pass_str * next_usr, * usr = users;
 	while (usr != NULL) {
@@ -99,7 +109,7 @@ void run_server(int server_port) {
 		usr = next_usr;
 	}
 
-	free(room_file);
+	//free(room_file);
 
 	sleep(1);
 

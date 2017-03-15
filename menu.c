@@ -77,10 +77,13 @@ void * run_menu_thread(void * arg_struct) {
 	}
 
 	free(fds);
+	int i;
+	for (i = 2; i < fds_size; i++) {
+		free(*(names+i));
+	}
 	free(names);
-
-	pthread_exit(NULL);
-
+	
+	return NULL;
 }
 
 void create_menu_thread() {
@@ -239,7 +242,7 @@ static void process_comm_request(struct comm_block * room_info,
 
 	// release allocated resources
 	if (message != NULL)
-					free(message);
+		free(message);
 
 }
 
@@ -347,6 +350,7 @@ static void process_client_request(struct comm_block * room_info,
 			if (errno != 0 || chat_no <= 0) {
 				send_message(client_fd,
 		"Invalid message - no option selected.");
+				free(message);
 				return;
 			}
 			// select which chat room to enter
@@ -356,6 +360,7 @@ static void process_client_request(struct comm_block * room_info,
 			if (chat_no >= 1) {
 				send_message(client_fd,
 		"Such a room does not exist, the number is too high.");
+				free(message);
 				return;
 			}
 			// transfer client to the chat room
@@ -370,9 +375,8 @@ static void process_client_request(struct comm_block * room_info,
 		assert(false);
 	}
 
-				// release allocated resources
-				if (message != NULL)
-					free(message);
+	// release allocated resources
+	free(message);
 
 
 }
