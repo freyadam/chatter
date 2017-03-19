@@ -19,7 +19,7 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	while ((err_read = read(fd, &c, 1)) == 1) {
 
 		if (position >= line_len - 1) {
-			line_len += 10;
+			line_len += 1;
 			line = realloc(line, line_len);
 			if (line == NULL) {
 				free(line);

@@ -154,9 +154,7 @@ static void process_client_request(struct comm_block * room_info,
 				close(client_no);
 		errx(1, "get_dispatch");
 	} else if (type == EOF_STREAM) // EOF
-
-		// end (*fds)[client_no];
-		(*fds)[client_no].events = 0;
+		delete_client(room_info, client_no);
 
 	else { // everything worked well --> valid message
 
@@ -196,7 +194,7 @@ static void process_client_request(struct comm_block * room_info,
 			}
 			break;
 		default:
-			assert(false);
+			delete_client(room_info, client_no);
 		}
 
 		// release allocated resources

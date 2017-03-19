@@ -256,10 +256,8 @@ static void process_client_request(struct comm_block * room_info,
 
 	struct pollfd ** fds = &(room_info->fds);
 
-	int client_fd;
-	char * message;
-	message = NULL;
-	client_fd = (*fds)[client_no].fd;
+	int client_fd = (*fds)[client_no].fd;
+	char * message = NULL;
 
 	enum dispatch_t type = get_dispatch(client_fd, &message);
 
@@ -268,8 +266,8 @@ static void process_client_request(struct comm_block * room_info,
 		errx(1, "get_dispatch");
 		break;
 	case EOF_STREAM:
-		// end (*fds)[client_no];
-		(*fds)[client_no].events = 0;
+		printf("EOF_STR\n");
+		delete_client(room_info, client_no);
 		break;
 	default:
 		printf("Dispatch received\n");
@@ -380,7 +378,8 @@ static void process_client_request(struct comm_block * room_info,
 		}
 		break;
 	default:
-		assert(false);
+		printf("DEFAULT\n");
+		delete_client(room_info, client_no);
 	}
 
 	// release allocated resources

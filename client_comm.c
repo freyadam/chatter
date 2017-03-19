@@ -87,7 +87,7 @@ void * lines_to_pipe(void * arg) {
 			}
 
 			int err_read = read(0, line + (current++), 1);
-			if (err_read < 1) {
+			if (err_read < 0) {
 				read_line = false;
 			}
 
