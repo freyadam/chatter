@@ -298,8 +298,6 @@ int process_client_request(int server_fd, int line_fd) {
 
 	} else { // type of the dispatch is message
 
-		printf("Sending message\n");
-
 		result = send_message(server_fd, line);
 		free(line);
 		return (result);

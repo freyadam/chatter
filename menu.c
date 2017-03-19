@@ -21,13 +21,14 @@ void * run_menu_thread(void * arg_struct) {
 
 	free(args);
 
+	end_of_thread = false;
+
 	int fds_size = 2; // priority channel + thread communication channel
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
 
 	struct comm_block room_info;
 
-	end_of_thread = false;
 
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds[0], priority_fd);
