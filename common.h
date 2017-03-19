@@ -20,8 +20,8 @@ struct new_thread_args {
 		struct thread_data * data_ptr;
 };
 
-struct thread_data * thread_list;
-pthread_mutex_t thr_list_mx;
+extern struct thread_data * thread_list;
+extern pthread_mutex_t thr_list_mx;
 
 struct comm_block {
 	struct pollfd ** fds;
