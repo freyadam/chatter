@@ -87,9 +87,7 @@ void * lines_to_pipe(void * arg) {
 			}
 
 			int err_read = read(0, line + (current++), 1);
-			if (err_read == 0) {
-				errx(1, "read");
-			} else {
+			if (err_read < 1) {
 				err(1, "read");
 			}
 
@@ -299,6 +297,8 @@ int process_client_request(int server_fd, int line_fd) {
 		return (send_exit(server_fd));
 
 	} else { // type of the dispatch is message
+
+		printf("Sending message\n");
 
 		result = send_message(server_fd, line);
 		free(line);

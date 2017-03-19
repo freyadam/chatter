@@ -147,7 +147,7 @@ static void process_client_request(struct comm_block * room_info,
 	int * fds_size = room_info->size;
 
 	message = NULL;
-	client_fd = fds[client_no]->fd;
+	client_fd = (*fds)[client_no].fd;
 
 	enum dispatch_t type = get_dispatch(client_fd, &message);
 	if (type == FAILURE) { // something went wrong

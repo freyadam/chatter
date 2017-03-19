@@ -28,6 +28,7 @@ main(int argc, char *argv[]) {
 		errx(1, "Port number has to be bigger than 1024.");
 
 	buffer_size = 0;
+	username = NULL;
 	printf("Enter your username: ");
 	if ((username_len = getline(&username, &buffer_size, stdin)) == -1)
 		err(1, "getline");
@@ -41,6 +42,7 @@ main(int argc, char *argv[]) {
 	tcsetattr(0, TCSANOW, &new_flags);
 
 	buffer_size = 0;
+	password = NULL;
 	printf("Enter your password: ");
 	if ((password_len = getline(&password, &buffer_size, stdin) == -1))
 		err(1, "getline");
