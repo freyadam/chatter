@@ -88,7 +88,7 @@ void * lines_to_pipe(void * arg) {
 
 			int err_read = read(0, line + (current++), 1);
 			if (err_read < 1) {
-				err(1, "read");
+				read_line = false;
 			}
 
 			if (line[current-1] == '\n') {
@@ -123,6 +123,7 @@ void * lines_to_pipe(void * arg) {
 void client_sigint_handler(int sig) {
 
 	assert(sig == SIGINT);
+	read_line = false;
 
 }
 
@@ -147,7 +148,6 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 	if (err_poll == -1 && errno == EINTR) {
 		send_end(fds[0].fd);
 		printf("Exiting...\n");
-		read_line = false;
 		close(0);
 	} else if (err_poll == -1)
 		err(1, "poll");
