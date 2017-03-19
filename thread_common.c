@@ -47,12 +47,10 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 
 int delete_client(struct comm_block * room_info, int client_no) {
 
+	int i;
 	struct pollfd ** fds = room_info->fds;
 	char *** names = room_info->names;
 	int * fds_size = room_info->size;
-
-	int i, client_name_str_len = 50 + strlen((*names)[client_no]);
-	char * client_name = malloc(client_name_str_len);
 
 	close((*fds)[client_no].fd);
 	free((*names)[client_no]);
@@ -78,8 +76,6 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	*names = realloc(*names, sizeof (struct pollfd) * (*fds_size));
 	if (*names == NULL)
 		err(1, "realloc");
-
-	free(client_name);
 
 	return (0);
 }

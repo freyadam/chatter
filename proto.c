@@ -34,7 +34,7 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	if (err_read == -1) {
 		free(line);
 		return (-1);
-		}
+	}
 
 	*line_ptr = line;
 

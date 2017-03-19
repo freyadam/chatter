@@ -7,6 +7,7 @@ void list_users();
 int insert_user(char * users_file, char * username, char * passwd);
 int user_present(char * username, char * passwd);
 int username_present(char * username, char * passwd);
+void free_user_structs();
 
 struct user_pass {
 		char * username;

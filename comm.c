@@ -88,7 +88,7 @@ void * run_comm_thread(void * arg_struct) {
 
 	int i;
 	for (i = 2; i < fds_size; i++) {
-		free(*(names+i));
+		free(names[i]);
 	}
 
 	free(names);
@@ -112,9 +112,7 @@ static void process_comm_request(struct comm_block * room_info,
 	if (type != MSG)
 		errx(1, "process_comm_request");
 
-	new_username = strdup(message);
-
-	free(message);
+	new_username = message;
 	message = NULL;
 
 	type = get_dispatch((*fds)[1].fd, &message);
@@ -149,7 +147,7 @@ static void process_client_request(struct comm_block * room_info,
 	int * fds_size = room_info->size;
 
 	message = NULL;
-	client_fd = (*fds)[client_no].fd;
+	client_fd = fds[client_no]->fd;
 
 	enum dispatch_t type = get_dispatch(client_fd, &message);
 	if (type == FAILURE) { // something went wrong

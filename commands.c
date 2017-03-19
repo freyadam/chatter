@@ -199,3 +199,20 @@ char * get_command(char * cmd_name) {
 	return (result);
 
 }
+
+void free_cmd_structs() {
+
+	pthread_mutex_lock(&commands_mx);
+
+	cmd_str * next_cmd, * cmd = commands;
+	while (cmd != NULL) {
+		free(cmd->name);
+		free(cmd->command);
+		next_cmd = cmd->next;
+		free(cmd);
+		cmd = next_cmd;
+	}
+
+	pthread_mutex_unlock(&commands_mx);
+
+}

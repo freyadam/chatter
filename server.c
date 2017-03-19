@@ -87,23 +87,9 @@ void run_server(int server_port) {
 		thread = next_thread;
 	}
 
-	cmd_str * next_cmd, * cmd = commands;
-	while (cmd != NULL) {
-		free(cmd->name);
-		free(cmd->command);
-		next_cmd = cmd->next;
-		free(cmd);
-		cmd = next_cmd;
-	}
+	free_cmd_structs();
 
-	user_pass_str * next_usr, * usr = users;
-	while (usr != NULL) {
-		free(usr->username);
-		free(usr->passwd);
-		next_usr = usr->next;
-		free(usr);
-		usr = next_usr;
-	}
+	free_user_structs();
 
 	sleep(1);
 

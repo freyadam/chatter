@@ -6,6 +6,7 @@ int load_commands(char * filename);
 void list_commands();
 int perform_command(int fd, char * cmd, char * room_name);
 char * get_command(char * cmd_name);
+void free_cmd_structs();
 
 struct command_str {
 		char * name;

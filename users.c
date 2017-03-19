@@ -199,6 +199,7 @@ static int username_present_aux(char * username, char * passwd) {
 }
 
 int username_present(char * username, char * passwd) {
+
 	pthread_mutex_lock(&users_mx);
 
 	int result = username_present_aux(username, passwd);
@@ -206,4 +207,21 @@ int username_present(char * username, char * passwd) {
 	pthread_mutex_unlock(&users_mx);
 
 	return (result);
+}
+
+void free_user_structs() {
+
+	pthread_mutex_lock(&users_mx);
+	
+	user_pass_str * next_usr, * usr = users;
+	while (usr != NULL) {
+		free(usr->username);
+		free(usr->passwd);
+		next_usr = usr->next;
+		free(usr);
+		usr = next_usr;
+	}
+
+	pthread_mutex_unlock(&users_mx);
+
 }

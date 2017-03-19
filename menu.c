@@ -353,6 +353,9 @@ static void process_client_request(struct comm_block * room_info,
 				free(message);
 				return;
 			}
+
+			pthread_mutex_lock(&thr_list_mx);
+
 			// select which chat room to enter
 			struct thread_data * thr_ptr;
 			for (thr_ptr = thread_list->next;
@@ -368,6 +371,8 @@ static void process_client_request(struct comm_block * room_info,
 			if (transfer_client(thr_ptr->comm_fd,
 		room_info, client_no) != 0)
 				errx(1, "transfer_client");
+
+			pthread_mutex_unlock(&thr_list_mx);
 
 		}
 		break;

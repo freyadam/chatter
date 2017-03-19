@@ -86,7 +86,12 @@ void * lines_to_pipe(void * arg) {
 				}
 			}
 
-			read(0, line + (current++), 1);
+			int err_read = read(0, line + (current++), 1);
+			if (err_read == 0) {
+				errx(1, "read");
+			} else {
+				err(1, "read");
+			}
 
 			if (line[current-1] == '\n') {
 				break;
