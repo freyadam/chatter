@@ -12,8 +12,8 @@ static void process_client_request(struct comm_block * room_info,
 
 void poll_cycle(struct comm_block * room_info, char * room_name) {
 
-	struct pollfd ** fds_ptr = room_info->fds;
-	int * fds_size_ptr = room_info->size;
+	struct pollfd ** fds_ptr = &(room_info->fds);
+	int * fds_size_ptr = &(room_info->size);
 
 	int client_no;
 
@@ -66,9 +66,9 @@ void * run_comm_thread(void * arg_struct) {
 	struct comm_block room_info;
 
 	// initialize comm_block
-	room_info.fds = &fds;
-	room_info.names = &names;
-	room_info.size = &fds_size;
+	room_info.fds = fds;
+	room_info.names = names;
+	room_info.size = fds_size;
 
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds[0], priority_fd);
@@ -84,14 +84,14 @@ void * run_comm_thread(void * arg_struct) {
 
 	}
 
-	free(fds);
+	free(room_info.fds);
 
 	int i;
-	for (i = 2; i < fds_size; i++) {
-		free(names[i]);
+	for (i = 2; i < room_info.size; i++) {
+		free(room_info.names[i]);
 	}
 
-	free(names);
+	free(room_info.names);
 	free(room_name);
 
 	return (NULL);
@@ -105,7 +105,7 @@ static void process_comm_request(struct comm_block * room_info,
 	char * message, * new_username;
 	message = NULL;
 
-	struct pollfd ** fds = room_info->fds;
+	struct pollfd ** fds = &(room_info->fds);
 
 	// add new client
 	enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
@@ -142,9 +142,9 @@ static void process_client_request(struct comm_block * room_info,
 	int i, client_fd;
 	char * message;
 
-	struct pollfd ** fds = room_info->fds;
-	char *** names = room_info->names;
-	int * fds_size = room_info->size;
+	struct pollfd ** fds = &(room_info->fds);
+	char *** names = &(room_info->names);
+	int * fds_size = &(room_info->size);
 
 	message = NULL;
 	client_fd = (*fds)[client_no].fd;
@@ -211,9 +211,9 @@ void send_info_to_new_user(struct comm_block * room_info, char * room_name) {
 
 	int i, fd;
 
-	struct pollfd ** fds_ptr = room_info->fds;
-	char *** names = room_info->names;
-	int * fds_size = room_info->size;
+	struct pollfd ** fds_ptr = &(room_info->fds);
+	char *** names = &(room_info->names);
+	int * fds_size = &(room_info->size);
 
 	fd = (*fds_ptr)[*fds_size].fd;
 
@@ -237,9 +237,9 @@ void send_info_to_new_user(struct comm_block * room_info, char * room_name) {
 int add_client(struct comm_block * room_info,
 		int fd, char * user_name, char * room_name) {
 
-	struct pollfd ** fds_ptr = room_info->fds;
-	char *** names = room_info->names;
-	int * fds_size = room_info->size;
+	struct pollfd ** fds_ptr = &(room_info->fds);
+	char *** names = &(room_info->names);
+	int * fds_size = &(room_info->size);
 
 	int i;
 

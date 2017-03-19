@@ -15,9 +15,9 @@ void init_pollfd_record(struct pollfd * fd_ptr, int fd) {
 
 int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 
-	struct pollfd ** fds = room_info->fds;
-	char *** names = room_info->names;
-	int * fds_size = room_info->size;
+	struct pollfd ** fds = &(room_info->fds);
+	char *** names = &(room_info->names);
+	int * fds_size = &(room_info->size);
 
 	int i, client_fd = (*fds)[client_no].fd;
 
@@ -48,9 +48,9 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 int delete_client(struct comm_block * room_info, int client_no) {
 
 	int i;
-	struct pollfd ** fds = room_info->fds;
-	char *** names = room_info->names;
-	int * fds_size = room_info->size;
+	struct pollfd ** fds = &(room_info->fds);
+	char *** names = &(room_info->names);
+	int * fds_size = &(room_info->size);
 
 	close((*fds)[client_no].fd);
 	free((*names)[client_no]);
@@ -82,8 +82,8 @@ int delete_client(struct comm_block * room_info, int client_no) {
 
 void process_priority_request(struct comm_block * room_info, char * room_name) {
 
-	struct pollfd * fds = *(room_info->fds);
-	int fds_size = *(room_info->size);
+	struct pollfd * fds = room_info->fds;
+	int fds_size = room_info->size;
 
 	char * message = NULL;
 	int client_no;

@@ -27,8 +27,10 @@ void * run_menu_thread(void * arg_struct) {
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
 
-	struct comm_block room_info;
+	printf("fds: %p\n", fds);
+	printf("names: %p\n", names);
 
+	struct comm_block room_info;
 
 	// initialize pollfd for priority channel
 	init_pollfd_record(&fds[0], priority_fd);
@@ -39,35 +41,35 @@ void * run_menu_thread(void * arg_struct) {
 	names[1] = "comm";
 
 	// initialize room_info
-	room_info.fds = &fds;
-	room_info.names = &names;
-	room_info.size = &fds_size;
+	room_info.fds = fds;
+	room_info.names = names;
+	room_info.size = fds_size;
 
 	int err_poll, client_no;
 
 	while (!end_of_thread) {
 
-		if ((err_poll = poll(fds, fds_size, -1)) < 0)
+		if ((err_poll = poll(room_info.fds, room_info.size, -1)) < 0)
 			errx(1, "poll");
 
 		// priority channel
-		if (fds[0].revents & POLLIN) {
+		if (room_info.fds[0].revents & POLLIN) {
 
 			process_priority_request(&room_info, room_name);
 
 		}
 
 		// communication between threads
-		if (fds[1].revents & POLLIN) {
+		if (room_info.fds[1].revents & POLLIN) {
 
 			process_comm_request(&room_info, room_name);
 
 		}
 
 		// client threads
-		for (client_no = 2; client_no < fds_size; client_no++) {
+		for (client_no = 2; client_no < room_info.size; client_no++) {
 
-			if (fds[client_no].revents & POLLIN) {
+			if (room_info.fds[client_no].revents & POLLIN) {
 
 				process_client_request(&room_info, client_no);
 
@@ -77,12 +79,12 @@ void * run_menu_thread(void * arg_struct) {
 
 	}
 
-	free(fds);
+	free(room_info.fds);
 	int i;
-	for (i = 2; i < fds_size; i++) {
-		free(*(names+i));
+	for (i = 2; i < room_info.size; i++) {
+		free(room_info.names[i]);
 	}
-	free(names);
+	free(room_info.names);
 
 	return (NULL);
 }
@@ -181,9 +183,9 @@ void print_info_to_new_client(int fd) {
 
 int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
 
-	struct pollfd ** fds_ptr = room_info->fds;
-	char *** names = room_info->names;
-	int * fds_size = room_info->size;
+	struct pollfd ** fds_ptr = &(room_info->fds);
+	char *** names = &(room_info->names);
+	int * fds_size = &(room_info->size);
 
 	*fds_ptr = (struct pollfd *) realloc(*fds_ptr,
 		sizeof (struct pollfd) * ((*fds_size)+1));
@@ -210,7 +212,7 @@ int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
 static void process_comm_request(struct comm_block * room_info,
 		char * room_name) {
 
-	struct pollfd ** fds = room_info->fds;
+	struct pollfd ** fds = &(room_info->fds);
 
 	int new_fd;
 	char * message, * new_username;
@@ -252,7 +254,7 @@ static void process_client_request(struct comm_block * room_info,
 		int client_no) {
 
 
-	struct pollfd ** fds = room_info->fds;
+	struct pollfd ** fds = &(room_info->fds);
 
 	int client_fd;
 	char * message;

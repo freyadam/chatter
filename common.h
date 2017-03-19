@@ -24,9 +24,9 @@ extern struct thread_data * thread_list;
 extern pthread_mutex_t thr_list_mx;
 
 struct comm_block {
-	struct pollfd ** fds;
-	char *** names;
-	int * size;
+	struct pollfd * fds;
+	char ** names;
+	int size;
 };
 
 #endif // COMMON_H_
