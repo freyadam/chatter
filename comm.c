@@ -153,8 +153,10 @@ static void process_client_request(struct comm_block * room_info,
 	if (type == FAILURE) { // something went wrong
 				close(client_no);
 		errx(1, "get_dispatch");
-	} else if (type == EOF_STREAM) // EOF
+	} else if (type == EOF_STREAM) { // EOF
 		delete_client(room_info, client_no);
+		return;
+	}
 
 	else { // everything worked well --> valid message
 
@@ -194,7 +196,7 @@ static void process_client_request(struct comm_block * room_info,
 			}
 			break;
 		default:
-			delete_client(room_info, client_no);
+			assert(false);
 		}
 
 		// release allocated resources
