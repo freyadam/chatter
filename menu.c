@@ -264,11 +264,10 @@ static void process_client_request(struct comm_block * room_info,
 	switch (type) {
 	case FAILURE:
 		errx(1, "get_dispatch");
-		break;
 	case EOF_STREAM:
-		printf("EOF_STR\n");
+		printf("EOF_STREAM\n");
 		delete_client(room_info, client_no);
-		break;
+		return;
 	default:
 		printf("Dispatch received\n");
 	}
@@ -378,8 +377,7 @@ static void process_client_request(struct comm_block * room_info,
 		}
 		break;
 	default:
-		printf("DEFAULT\n");
-		delete_client(room_info, client_no);
+		assert(false);
 	}
 
 	// release allocated resources
