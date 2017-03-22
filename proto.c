@@ -6,24 +6,24 @@
 // without the delimiter (which will be consumed)
 int get_delim(int fd, char ** line_ptr, char del) {
 
-	if (*line_ptr != NULL) {
-		free(*line_ptr);
-	}
+	assert(*line_ptr == NULL);
 
 	int position, line_len, err_read;
 	line_len = 10;
 	position = 0;
-	char * line = malloc(line_len);
+	char *line_new, * line = malloc(line_len);
 	char c;
 
 	while ((err_read = read(fd, &c, 1)) == 1) {
 
 		if (position >= line_len - 1) {
 			line_len += 1;
-			line = realloc(line, line_len);
-			if (line == NULL) {
+			line_new = realloc(line, line_len);
+			if (line_new == NULL) {
 				free(line);
 				return (-1);
+			} else {
+				line = line_new;
 			}
 		}
 
@@ -45,10 +45,12 @@ int get_delim(int fd, char ** line_ptr, char del) {
 	if (err_read == 0) {
 		if (position >= line_len - 1) {
 			line_len += 1;
-			line = realloc(line, line_len);
-			if (line == NULL) {
+			line_new = realloc(line, line_len);
+			if (line_new == NULL) {
 				free(line);
 				return (-1);
+			} else {
+				line = line_new;
 			}
 		}
 

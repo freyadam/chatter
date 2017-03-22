@@ -90,6 +90,8 @@ void accept_thread_cycle(int fd) {
 
 	if (!user_present(username, password)) {
 		send_message(client_fd, "Wrong username or password");
+		free(username);
+		free(password);
 		close(client_fd);
 		return;
 	}
