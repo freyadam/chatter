@@ -6,18 +6,18 @@
 // without the delimiter (which will be consumed)
 int get_delim(int fd, char ** line_ptr, char del) {
 
-	assert(*line_ptr == NULL);
-
 	int position, line_len, err_read;
 	line_len = 10;
 	position = 0;
-	char *line_new, * line = malloc(line_len);
+	char * line_new, * line = malloc(line_len);
 	char c;
+
+	assert(*line_ptr == NULL);
 
 	while ((err_read = read(fd, &c, 1)) == 1) {
 
 		if (position >= line_len - 1) {
-			line_len += 1;
+			line_len++;
 			line_new = realloc(line, line_len);
 			if (line_new == NULL) {
 				free(line);
@@ -44,7 +44,7 @@ int get_delim(int fd, char ** line_ptr, char del) {
 
 	if (err_read == 0) {
 		if (position >= line_len - 1) {
-			line_len += 1;
+			line_len++;
 			line_new = realloc(line, line_len);
 			if (line_new == NULL) {
 				free(line);
@@ -63,10 +63,12 @@ int get_delim(int fd, char ** line_ptr, char del) {
 
 enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
-	*message_ptr = NULL;
-
 	char * prefix = NULL;
 	ssize_t prefix_len;
+
+	assert(*message_ptr == NULL);
+
+	*message_ptr = NULL;
 
 	// get prefix
 	prefix_len = get_delim(fd, &prefix, DELIMITER);
@@ -106,10 +108,12 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 		// get the actual command
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
-		if (err_arg == -1)
-				return (FAILURE);
-		else if (err_arg == 0)
-				return (EOF_STREAM);
+		if (err_arg == -1) {
+			return (FAILURE);
+		} else if (err_arg == 0) {
+			free(*message_ptr);
+			return (EOF_STREAM);
+		}
 
 		// message_ptr already set in get_delim
 		return (CMD);
@@ -122,14 +126,17 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		int err_arg = get_delim(fd, message_ptr, DELIMITER);
 
 		if (err_arg == -1) {
-				return (FAILURE);
-
-		} else if (err_arg == 0)
-				return (EOF_STREAM);
+			return (FAILURE);
+		} else if (err_arg == 0) {
+			free(*message_ptr);
+			return (EOF_STREAM);
+		}
 
 		int msg_length = strtol(*message_ptr, NULL, 10);
-		if (msg_length == 0 && errno == EINVAL)
-		return (FAILURE);
+		if (msg_length == 0 && errno == EINVAL) {
+			free(*message_ptr);
+			return (FAILURE);
+		}
 
 		free(*message_ptr);
 
@@ -144,21 +151,23 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		msg_length+1-chars_read);
 
 			if (err_arg == -1) {
+				free(*message_ptr);
 				return (FAILURE);
 			}
 
 			chars_read += err_arg;
 		}
 
-		if ((*message_ptr)[msg_length] != DELIMITER) {
-				return (FAILURE);
+		if ((*message_ptr)[msg_length] != DELIMITER) {	
+			free(*message_ptr);
+			return (FAILURE);
 		}
 
 		(*message_ptr)[msg_length] = '\0';
 
 		// message_ptr already set previously
 
-								return (MSG);
+		return (MSG);
 
 	} else { // UNKNOWN PREFIX
 
@@ -187,6 +196,9 @@ int get_message(int fd, char ** contents_ptr) {
 					return (EOF_IN_STREAM);
 				case MSG:
 					break;
+				case CMD:
+					free(*contents_ptr);
+					break;
 				default:
 					return (-1);
 				}
@@ -210,7 +222,6 @@ int send_dispatch(int fd, char * dispatch) {
 		sum += result;
 
 	}
-
 
 	return (0);
 }
