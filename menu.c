@@ -384,7 +384,7 @@ static void process_client_request(struct comm_block * room_info,
 
 		break;
 	default:
-		free(mesage);
+		free(message);
 		assert(false);
 	}
 
