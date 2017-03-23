@@ -20,7 +20,7 @@ int get_delim(int fd, char ** line_ptr, char del, int max_len) {
 			line_len++;
 
 			if (line_len >= max_len) { // message is too long
-				printf("get_delim -- max_msg_len: %d\n", line_len);
+				//printf("get_delim -- max_msg_len: %d\n", line_len);
 				line_len--;
 				break;
 			}
@@ -145,8 +145,6 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 	   
 		int msg_length = strtol(*message_ptr, NULL, 10);
 		free(*message_ptr);
-
-		printf("Msg len: %d\n", msg_length);
 
 		if (msg_length == 0 && errno == EINVAL) {
 			return (FAILURE);
