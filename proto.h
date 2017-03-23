@@ -6,8 +6,6 @@
 #define	MAX_MSG_LEN_SIZE 6
 #define	MSG_PREFIX_LEN 17
 
-#define	MAX_MSG_LEN 5200
-
 // FAILURE and EOF_STREAM are not valid types of dispatch
 // but return value that signals unsuccessful retrieval
 // of message

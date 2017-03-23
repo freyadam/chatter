@@ -85,13 +85,12 @@ void * run_comm_thread(void * arg_struct) {
 	}
 
 	free(room_info.fds);
-
 	int i;
 	for (i = 2; i < room_info.size; i++) {
 		free(room_info.names[i]);
 	}
-
 	free(room_info.names);
+
 	free(room_name);
 
 	return (NULL);
@@ -184,7 +183,7 @@ static void process_client_request(struct comm_block * room_info,
 				send_message(client_fd, "Command not found.");
 			} else {
 				perform_command(client_fd, cmd,
-		(*names)[0]); // name of room
+								(*names)[0]); // name of room
 			}
 			break;
 		case MSG:
