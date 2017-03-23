@@ -225,7 +225,6 @@ static void process_comm_request(struct comm_block * room_info,
 	}
 
 	new_username = strdup(message);
-
 	free(message);
 	message = NULL;
 
@@ -292,6 +291,7 @@ static void process_client_request(struct comm_block * room_info,
 		// perform cmd
 		send_message(client_fd,
 		"CMD: This function is disabled in menu.");
+		free(message);
 		break;
 	case MSG:
 
@@ -343,6 +343,10 @@ static void process_client_request(struct comm_block * room_info,
 			}
 			print_info_to_new_client(client_fd);
 
+			if (new_room_name != NULL) {
+				free(new_room_name);
+			}
+
 		} else { // enter chat room
 
 			errno = 0;
@@ -375,13 +379,13 @@ static void process_client_request(struct comm_block * room_info,
 			pthread_mutex_unlock(&thr_list_mx);
 
 		}
+
+		free(message);
+
 		break;
 	default:
+		free(mesage);
 		assert(false);
 	}
-
-	// release allocated resources
-	free(message);
-
 
 }

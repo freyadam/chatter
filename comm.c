@@ -122,7 +122,7 @@ static void process_comm_request(struct comm_block * room_info,
 		new_fd = strtol(message, NULL, 10);
 		if (new_fd == 0 && errno == EINVAL)
 			err(1, "strtol");
-				}
+	}
 
 	printf("New client: %s -- its fd: %d\n", new_username, new_fd);
 
@@ -151,7 +151,7 @@ static void process_client_request(struct comm_block * room_info,
 
 	enum dispatch_t type = get_dispatch(client_fd, &message);
 	if (type == FAILURE) { // something went wrong
-				close(client_no);
+		close(client_no);
 		errx(1, "get_dispatch");
 	} else if (type == EOF_STREAM) { // EOF
 		delete_client(room_info, client_no);

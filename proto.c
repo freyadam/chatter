@@ -74,17 +74,21 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 	prefix_len = get_delim(fd, &prefix, DELIMITER);
 
 	if (prefix_len == 0) {
+
 		free(prefix);
 		return (EOF_STREAM);
-	} else if (prefix_len == -1) {
-		free(prefix);
-		return (FAILURE);
-	} else if (prefix_len != 3) {
-		free(prefix);
-		return (FAILURE);
-	}
 
-	if (strcmp(prefix, "ERR") == 0) { // ERROR
+	} else if (prefix_len == -1) {
+
+		free(prefix);
+		return (FAILURE);
+
+	} else if (prefix_len != 3) {
+
+		free(prefix);
+		return (FAILURE);
+
+	} else if (strcmp(prefix, "ERR") == 0) { // ERROR
 
 		free(prefix);
 		*message_ptr = NULL;
@@ -133,12 +137,11 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		}
 
 		int msg_length = strtol(*message_ptr, NULL, 10);
+		free(*message_ptr);
+
 		if (msg_length == 0 && errno == EINVAL) {
-			free(*message_ptr);
 			return (FAILURE);
 		}
-
-		free(*message_ptr);
 
 		*message_ptr = malloc(msg_length+1);
 		if (message_ptr == NULL)
@@ -185,7 +188,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 int get_message(int fd, char ** contents_ptr) {
 
-	*contents_ptr = NULL;
+	assert(*contents_ptr == NULL);
 
 	enum dispatch_t type = get_dispatch(fd, contents_ptr);
 
@@ -198,7 +201,7 @@ int get_message(int fd, char ** contents_ptr) {
 					break;
 				case CMD:
 					free(*contents_ptr);
-					break;
+					return (-1);
 				default:
 					return (-1);
 				}
@@ -348,6 +351,7 @@ int send_message_from_file(int fd, char * file_path) {
 	if (length_of_file >= 10000) {
 		send_message(fd,
 		"Failed to send message from file, file was too long.");
+		close(fildes);
 		return (-1);
 	}
 

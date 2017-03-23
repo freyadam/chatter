@@ -91,22 +91,22 @@ void process_priority_request(struct comm_block * room_info, char * room_name) {
 
 	if (type == FAILURE || type == EOF_STREAM)
 		err(1, "process_priority_request");
-
-	if (type == MSG)
+	if (type == MSG) {
 		printf("Priority message received in %s: %s\n",
 		room_name, message);
-	else
-		printf("Priority message received in %s\n",
+		free(message);
+	} else 
+		printf("Priority dispatch received in %s\n",
 		room_name);
 
-	if (type == END) {
+	if (type == CMD) {
+		free(message);
+	} else if (type == END) {
 		for (client_no = 2; client_no < fds_size;
 		client_no++) { // send end to all clients
 			send_end(fds[client_no].fd);
 		}
 		end_of_thread = true;
 	}
-
-	free(message);
 
 }

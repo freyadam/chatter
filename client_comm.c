@@ -58,10 +58,8 @@ void * lines_to_pipe(void * arg) {
 
 	int * pipe = (int *) arg;
 	int allocated, current;
-	char * line;
+	char * line = NULL;
 	ssize_t wr_read, all_written;
-
-	line = NULL;
 
 	while (read_line) {
 
@@ -230,7 +228,7 @@ int run_client(char * server_address, int server_port,
 int process_server_request(int fd) {
 
 
-	char * message;
+	char * message = NULL;
 
 	enum dispatch_t disp_type = get_dispatch(fd, &message);
 
@@ -257,6 +255,9 @@ int process_server_request(int fd) {
 	case MSG:
 		printf("%s\n", message);
 		free(message);
+		break;
+	default:
+		assert(false);
 	}
 
 	return (0);
