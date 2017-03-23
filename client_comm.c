@@ -70,7 +70,7 @@ void * lines_to_pipe(void * arg) {
 		while (read_line) {
 
 			// max length of a message, rest will be sent separately
-			if (current >= 5000) {
+			if (current >= MAX_MSG_LEN) {
 				printf("Message too long, truncated at"
 		"5000 chars\n");
 				break;

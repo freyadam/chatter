@@ -18,6 +18,12 @@ int get_delim(int fd, char ** line_ptr, char del) {
 
 		if (position >= line_len - 1) {
 			line_len++;
+
+			if (line_len >= MAX_MSG_LEN+1) { // message is too long
+				free(line);
+				return (-1);
+			}
+
 			line_new = realloc(line, line_len);
 			if (line_new == NULL) {
 				free(line);
@@ -348,7 +354,7 @@ int send_message_from_file(int fd, char * file_path) {
 	if (lseek(fildes, 0, SEEK_SET) == -1) // set file offset to start again
 		err(1, "lseek");
 
-	if (length_of_file >= 10000) {
+	if (length_of_file >= MAX_MSG_LEN) {
 		send_message(fd,
 		"Failed to send message from file, file was too long.");
 		close(fildes);

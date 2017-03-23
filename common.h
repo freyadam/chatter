@@ -6,6 +6,8 @@
 
 #define	DELIMITER ' '
 
+#define	MAX_MSG_LEN 3000
+
 struct thread_data {
 		pthread_t id;
 		int comm_fd;
