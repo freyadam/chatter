@@ -231,7 +231,7 @@ static void process_comm_request(struct comm_block * room_info,
 		if (new_fd == 0 && errno == EINVAL)
 						err(1, "strtol");
 	} else {
-		errx(1, "get_dispatch");
+		errx(1, "get_dispatch  _");
 	}
 
 	printf("New client: %s -- %d\n", new_username, new_fd);
@@ -259,9 +259,13 @@ static void process_client_request(struct comm_block * room_info,
 
 	switch (type) {
 	case FAILURE:
-		errx(1, "get_dispatch");
+		printf("FAILURE\n");
+		printf("Killing user no. %d\n", client_no);
+		delete_client(room_info, client_no);
+		return;
 	case EOF_STREAM:
 		printf("EOF_STREAM\n");
+		printf("Killing user no. %d\n", client_no);
 		delete_client(room_info, client_no);
 		return;
 	default:
