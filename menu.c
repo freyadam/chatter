@@ -335,10 +335,6 @@ static void process_client_request(struct comm_block * room_info,
 			}
 			print_info_to_new_client(client_fd);
 
-			if (new_room_name != NULL) {
-				free(new_room_name);
-			}
-
 		} else { // enter chat room
 
 			errno = 0;
