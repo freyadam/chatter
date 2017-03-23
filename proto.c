@@ -150,6 +150,8 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 		if (msg_length == 0 && errno == EINVAL) {
 			return (FAILURE);
+		} else if (msg_length > MAX_MSG_LEN) {
+			return (FAILURE);
 		}
 
 		*message_ptr = malloc(msg_length+1);
