@@ -12,32 +12,29 @@ static void process_client_request(struct comm_block * room_info,
 
 void poll_cycle(struct comm_block * room_info, char * room_name) {
 
-	struct pollfd ** fds_ptr = &(room_info->fds);
-	int * fds_size_ptr = &(room_info->size);
-
 	int client_no;
 
-	if (poll((*fds_ptr), (*fds_size_ptr), -1) < 0)
+	if (poll(room_info->fds, room_info->size, -1) < 0)
 		errx(1, "poll");
 
 	// priority channel
-	if ((*fds_ptr)[0].revents & POLLIN) {
+	if (room_info->fds[0].revents & POLLIN) {
 
 		process_priority_request(room_info, room_name);
 
 	}
 
 	// communication between threads
-	if ((*fds_ptr)[1].revents & POLLIN) {
+	if (room_info->fds[1].revents & POLLIN) {
 
 		process_comm_request(room_info, room_name);
 
 	}
 
 	// client threads
-	for (client_no = 2; client_no < (*fds_size_ptr); client_no++) {
+	for (client_no = 2; client_no < room_info->size; client_no++) {
 
-		if ((*fds_ptr)[client_no].revents & POLLIN) {
+		if (room_info->fds[client_no].revents & POLLIN) {
 
 
 			process_client_request(room_info, client_no);
@@ -104,17 +101,15 @@ static void process_comm_request(struct comm_block * room_info,
 	char * message, * new_username;
 	message = NULL;
 
-	struct pollfd ** fds = &(room_info->fds);
-
 	// add new client
-	enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
+	enum dispatch_t type = get_dispatch(room_info->fds[1].fd, &message);
 	if (type != MSG)
 		errx(1, "process_comm_request");
 
 	new_username = message;
 	message = NULL;
 
-	type = get_dispatch((*fds)[1].fd, &message);
+	type = get_dispatch(room_info->fds[1].fd, &message);
 	if (type != MSG)
 		errx(1, "process_comm_request");
 	else {
@@ -141,12 +136,8 @@ static void process_client_request(struct comm_block * room_info,
 	int i, client_fd;
 	char * message;
 
-	struct pollfd ** fds = &(room_info->fds);
-	char *** names = &(room_info->names);
-	int * fds_size = &(room_info->size);
-
 	message = NULL;
-	client_fd = (*fds)[client_no].fd;
+	client_fd = room_info->fds[client_no].fd;
 
 	enum dispatch_t type = get_dispatch(client_fd, &message);
 	if (type == FAILURE) { // something went wrong
@@ -183,15 +174,15 @@ static void process_client_request(struct comm_block * room_info,
 				send_message(client_fd, "Command not found.");
 			} else {
 				perform_command(client_fd, cmd,
-								(*names)[0]); // name of room
+								room_info->names[0]); // name of room
 			}
 			break;
 		case MSG:
 			// send message to all the other clients
-			for (i = 2; i < *fds_size; i++) {
+			for (i = 2; i < room_info->size; i++) {
 				if (i != client_no)
-		send_message_f((*fds)[i].fd, "<%s> %s",
-		(*names)[client_no], message);
+		send_message_f(room_info->fds[i].fd, "<%s> %s",
+		room_info->names[client_no], message);
 			}
 			break;
 		default:
@@ -210,18 +201,14 @@ void send_info_to_new_user(struct comm_block * room_info, char * room_name) {
 
 	int i, fd;
 
-	struct pollfd ** fds_ptr = &(room_info->fds);
-	char *** names = &(room_info->names);
-	int * fds_size = &(room_info->size);
-
-	fd = (*fds_ptr)[*fds_size].fd;
+	fd = room_info->fds[room_info->size].fd;
 
 	send_message_f(fd, "----- Connected to room %s -----", room_name);
-	if (*fds_size > 2) {
+	if (room_info->size > 2) {
 
 		send_message(fd, "Current users:");
-		for (i = 2; i < *fds_size; i++) {
-			send_message(fd, (*names)[i]);
+		for (i = 2; i < room_info->size; i++) {
+			send_message(fd, room_info->names[i]);
 		}
 
 	}
@@ -236,34 +223,30 @@ void send_info_to_new_user(struct comm_block * room_info, char * room_name) {
 int add_client(struct comm_block * room_info,
 		int fd, char * user_name, char * room_name) {
 
-	struct pollfd ** fds_ptr = &(room_info->fds);
-	char *** names = &(room_info->names);
-	int * fds_size = &(room_info->size);
-
 	int i;
 
-	*fds_ptr = (struct pollfd *) realloc(*fds_ptr,
-		sizeof (struct pollfd) * ((*fds_size)+1));
-	if (*fds_ptr == NULL)
+	room_info->fds = (struct pollfd *) realloc(room_info->fds,
+		sizeof (struct pollfd) * (room_info->size+1));
+	if (room_info->fds == NULL)
 		err(1, "realloc");
 
-	*names = (char **) realloc(*names, sizeof (char *) * ((*fds_size)+1));
-	if (*names == NULL)
+	room_info->names = (char **) realloc(room_info->names, sizeof (char *) * (room_info->size+1));
+	if (room_info->names == NULL)
 		err(1, "realloc");
 
-	init_pollfd_record(&((*fds_ptr)[*fds_size]), fd);
-	(*names)[*fds_size] = user_name;
+	init_pollfd_record(&(room_info->fds[room_info->size]), fd);
+	room_info->names[room_info->size] = user_name;
 
 	// send chatroom info to new user
 	send_info_to_new_user(room_info, room_name);
 
 	// send message to others as well
-	for (i = 2; i < *fds_size; i++) {
-					send_message_f((*fds_ptr)[i].fd,
+	for (i = 2; i < room_info->size; i++) {
+					send_message_f(room_info->fds[i].fd,
 		"New user connected: %s", user_name);
 	}
 
-	(*fds_size)++;
+	room_info->size++;
 
 	return (EXIT_SUCCESS);
 }

@@ -180,27 +180,23 @@ void print_info_to_new_client(int fd) {
 
 int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
 
-	struct pollfd ** fds_ptr = &(room_info->fds);
-	char *** names = &(room_info->names);
-	int * fds_size = &(room_info->size);
+	room_info->fds = (struct pollfd *) realloc(room_info->fds,
+		sizeof (struct pollfd) * (room_info->size+1));
 
-	*fds_ptr = (struct pollfd *) realloc(*fds_ptr,
-		sizeof (struct pollfd) * ((*fds_size)+1));
-
-	if (*fds_ptr == NULL)
+	if (room_info->fds == NULL)
 		err(1, "realloc");
 
-	*names = (char **) realloc(*names, sizeof (char *) * ((*fds_size)+1));
-	if (*names == NULL)
+	room_info->names = (char **) realloc(room_info->names, sizeof (char *) * (room_info->size+1));
+	if (room_info->names == NULL)
 		err(1, "realloc");
 
-	init_pollfd_record(&((*fds_ptr)[*fds_size]), fd);
+	init_pollfd_record(&(room_info->fds[room_info->size]), fd);
 
-	(*names)[*fds_size] = username;
+	room_info->names[room_info->size] = username;
 
 	print_info_to_new_client(fd);
 
-	(*fds_size)++;
+	(room_info->size)++;
 
 	return (0);
 
@@ -209,14 +205,12 @@ int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
 static void process_comm_request(struct comm_block * room_info,
 		char * room_name) {
 
-	struct pollfd ** fds = &(room_info->fds);
-
 	int new_fd;
 	char * message, * new_username;
 	message = NULL;
 
 	// add new client
-	enum dispatch_t type = get_dispatch((*fds)[1].fd, &message);
+	enum dispatch_t type = get_dispatch(room_info->fds[1].fd, &message);
 	if (type != MSG) {
 		errx(1, "get_dispatch");
 	}
@@ -225,7 +219,7 @@ static void process_comm_request(struct comm_block * room_info,
 	free(message);
 	message = NULL;
 
-	type = get_dispatch((*fds)[1].fd, &message);
+	type = get_dispatch(room_info->fds[1].fd, &message);
 	if (type == MSG) {
 		new_fd = strtol(message, NULL, 10);
 		if (new_fd == 0 && errno == EINVAL)
@@ -249,10 +243,7 @@ static void process_comm_request(struct comm_block * room_info,
 static void process_client_request(struct comm_block * room_info,
 		int client_no) {
 
-
-	struct pollfd ** fds = &(room_info->fds);
-
-	int client_fd = (*fds)[client_no].fd;
+	int client_fd = room_info->fds[client_no].fd;
 	char * message = NULL;
 
 	enum dispatch_t type = get_dispatch(client_fd, &message);

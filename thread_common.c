@@ -15,31 +15,26 @@ void init_pollfd_record(struct pollfd * fd_ptr, int fd) {
 
 int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 
-	struct pollfd ** fds = &(room_info->fds);
-	char *** names = &(room_info->names);
-	int * fds_size = &(room_info->size);
+	int i, client_fd = room_info->fds[client_no].fd;
 
-	int i, client_fd = (*fds)[client_no].fd;
+	send_message(room_fd, room_info->names[client_no]);
 
-	send_message(room_fd, (*names)[client_no]);
-
-	free((*names)[client_no]);
+	free(room_info->names[client_no]);
 
 	send_message_f(room_fd, "%d", client_fd);
-	for (i = client_no+1; i < *fds_size; i++) {
-		(*fds)[i-1] = (*fds)[i];
-		(*names)[i-1] = (*names)[i];
+	for (i = client_no+1; i < room_info->size; i++) {
+		room_info->fds[i-1] = room_info->fds[i];
+		room_info->names[i-1] = room_info->names[i];
 	}
 
-	(*fds_size)--;
+	room_info->size--;
 
-
-	*fds = realloc(*fds, sizeof (struct pollfd) * (*fds_size));
-	if (*fds == NULL)
+	room_info->fds = realloc(room_info->fds, sizeof (struct pollfd) * room_info->size);
+	if (room_info->fds == NULL)
 		err(1, "realloc");
 
-	*names = realloc(*names, sizeof (char *) * (*fds_size));
-	if (*names == NULL)
+	room_info->names = realloc(room_info->names, sizeof (char *) * room_info->size);
+	if (room_info->names == NULL)
 		err(1, "realloc");
 
 	return (0);
