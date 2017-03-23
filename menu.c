@@ -27,9 +27,6 @@ void * run_menu_thread(void * arg_struct) {
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
 	char ** names = malloc(sizeof (char *) * fds_size);
 
-	printf("fds: %p\n", fds);
-	printf("names: %p\n", names);
-
 	struct comm_block room_info;
 
 	// initialize pollfd for priority channel
