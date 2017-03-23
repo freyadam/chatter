@@ -4,7 +4,7 @@
 
 // get next delimited part of text
 // without the delimiter (which will be consumed)
-int get_delim(int fd, char ** line_ptr, char del) {
+int get_delim(int fd, char ** line_ptr, char del, int max_len) {
 
 	int position, line_len, err_read;
 	line_len = 10;
@@ -19,9 +19,10 @@ int get_delim(int fd, char ** line_ptr, char del) {
 		if (position >= line_len - 1) {
 			line_len++;
 
-			if (line_len >= MAX_MSG_LEN+1) { // message is too long
-				free(line);
-				return (-1);
+			if (line_len >= max_len) { // message is too long
+				printf("get_delim -- max_msg_len: %d\n", line_len);
+				line_len--;
+				break;
 			}
 
 			line_new = realloc(line, line_len);
@@ -77,7 +78,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 	*message_ptr = NULL;
 
 	// get prefix
-	prefix_len = get_delim(fd, &prefix, DELIMITER);
+	prefix_len = get_delim(fd, &prefix, DELIMITER, 4);
 
 	if (prefix_len == 0) {
 
@@ -117,7 +118,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		free(prefix);
 
 		// get the actual command
-		int err_arg = get_delim(fd, message_ptr, DELIMITER);
+		int err_arg = get_delim(fd, message_ptr, DELIMITER, MAX_MSG_LEN);
 		if (err_arg == -1) {
 			return (FAILURE);
 		} else if (err_arg == 0) {
@@ -133,7 +134,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		free(prefix);
 
 		// get length of message
-		int err_arg = get_delim(fd, message_ptr, DELIMITER);
+		int err_arg = get_delim(fd, message_ptr, DELIMITER, 10);
 
 		if (err_arg == -1) {
 			return (FAILURE);
@@ -141,9 +142,11 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 			free(*message_ptr);
 			return (EOF_STREAM);
 		}
-
+	   
 		int msg_length = strtol(*message_ptr, NULL, 10);
 		free(*message_ptr);
+
+		printf("Msg len: %d\n", msg_length);
 
 		if (msg_length == 0 && errno == EINVAL) {
 			return (FAILURE);
@@ -349,6 +352,9 @@ int send_message_from_file(int fd, char * file_path) {
 
 	// get file length
 	int length_of_file = (int)lseek(fildes, 0, SEEK_END);
+
+	printf("len of file: %d\n", length_of_file);
+
 	if (length_of_file == -1)
 		err(1, "lseek");
 	if (lseek(fildes, 0, SEEK_SET) == -1) // set file offset to start again

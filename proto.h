@@ -18,7 +18,7 @@ enum dispatch_t {
 	EOF_STREAM,
 	FAILURE};
 
-int get_delim(int fd, char ** line_ptr, char del);
+int get_delim(int fd, char ** line_ptr, char del, int max_len);
 enum dispatch_t get_dispatch(int fd, char ** message_ptr);
 int get_message(int fd, char ** contents_ptr);
 
