@@ -29,11 +29,13 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 
 	room_info->size--;
 
-	room_info->fds = realloc(room_info->fds, sizeof (struct pollfd) * room_info->size);
+	room_info->fds = realloc(room_info->fds,
+    sizeof (struct pollfd) * room_info->size);
 	if (room_info->fds == NULL)
 		err(1, "realloc");
 
-	room_info->names = realloc(room_info->names, sizeof (char *) * room_info->size);
+	room_info->names = realloc(room_info->names,
+    sizeof (char *) * room_info->size);
 	if (room_info->names == NULL)
 		err(1, "realloc");
 
@@ -64,11 +66,13 @@ int delete_client(struct comm_block * room_info, int client_no) {
 
 	room_info->size--;
 
-	room_info->fds = realloc(room_info->fds, sizeof (struct pollfd) * room_info->size);
+	room_info->fds = realloc(room_info->fds,
+    sizeof (struct pollfd) * room_info->size);
 	if (room_info->fds == NULL)
 		err(1, "realloc");
 
-	room_info->names = realloc(room_info->names, sizeof (struct pollfd) * room_info->size);
+	room_info->names = realloc(room_info->names,
+    sizeof (struct pollfd) * room_info->size);
 	if (room_info->names == NULL)
 		err(1, "realloc");
 
@@ -90,7 +94,7 @@ void process_priority_request(struct comm_block * room_info, char * room_name) {
 		printf("Priority message received in %s: %s\n",
 		room_name, message);
 		free(message);
-	} else 
+	} else
 		printf("Priority dispatch received in %s\n",
 		room_name);
 

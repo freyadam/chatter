@@ -186,7 +186,8 @@ int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
 	if (room_info->fds == NULL)
 		err(1, "realloc");
 
-	room_info->names = (char **) realloc(room_info->names, sizeof (char *) * (room_info->size+1));
+	room_info->names = (char **) realloc(room_info->names,
+    sizeof (char *) * (room_info->size+1));
 	if (room_info->names == NULL)
 		err(1, "realloc");
 

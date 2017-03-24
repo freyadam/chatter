@@ -20,7 +20,6 @@ int get_delim(int fd, char ** line_ptr, char del, int max_len) {
 			line_len++;
 
 			if (line_len >= max_len) { // message is too long
-				//printf("get_delim -- max_msg_len: %d\n", line_len);
 				line_len--;
 				break;
 			}
@@ -118,7 +117,8 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 		free(prefix);
 
 		// get the actual command
-		int err_arg = get_delim(fd, message_ptr, DELIMITER, MAX_MSG_LEN);
+		int err_arg = get_delim(fd, message_ptr,
+    DELIMITER, MAX_MSG_LEN);
 		if (err_arg == -1) {
 			return (FAILURE);
 		} else if (err_arg == 0) {
@@ -142,7 +142,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 			free(*message_ptr);
 			return (EOF_STREAM);
 		}
-	   
+
 		int msg_length = strtol(*message_ptr, NULL, 10);
 		free(*message_ptr);
 
@@ -170,7 +170,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 			chars_read += err_arg;
 		}
 
-		if ((*message_ptr)[msg_length] != DELIMITER) {	
+		if ((*message_ptr)[msg_length] != DELIMITER) {
 			free(*message_ptr);
 			return (FAILURE);
 		}

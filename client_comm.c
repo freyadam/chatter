@@ -69,14 +69,6 @@ void * lines_to_pipe(void * arg) {
 
 		while (read_line) {
 
-			// max length of a message, rest will be sent separately
-			/*
-			if (current >= (MAX_MSG_LEN - MAX_HEADER_LEN)) {
-				printf("Message too long, Split performed\n");
-				break;
-			}
-			*/
-
 			if (current+1 == allocated) {
 				allocated += 100;
 				line = realloc(line, allocated);
@@ -272,7 +264,8 @@ char * cmd_argument(char * line) {
 int process_client_request(int server_fd, int line_fd) {
 
 	char * line = NULL;
-	int result = get_delim(line_fd, &line, '\n', MAX_MSG_LEN - MAX_HEADER_LEN);
+	int result = get_delim(line_fd, &line,
+	'\n', MAX_MSG_LEN - MAX_HEADER_LEN);
 	if (result == -1)
 		err(1, "get_delim");
 

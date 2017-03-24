@@ -78,7 +78,7 @@ void accept_thread_cycle(int fd) {
 
 	// authentication
 	char * username = NULL;
-	if (get_message(client_fd, &username) != 0) {		
+	if (get_message(client_fd, &username) != 0) {
 		close(client_fd);
 		return;
 	}

@@ -212,7 +212,7 @@ int username_present(char * username, char * passwd) {
 void free_user_structs() {
 
 	pthread_mutex_lock(&users_mx);
-	
+
 	user_pass_str * next_usr, * usr = users;
 	while (usr != NULL) {
 		free(usr->username);

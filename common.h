@@ -7,7 +7,7 @@
 #define	DELIMITER ' '
 
 #define	MAX_MSG_LEN 3000
-#define MAX_HEADER_LEN 50
+#define	MAX_HEADER_LEN 50
 struct thread_data {
 		pthread_t id;
 		int comm_fd;
