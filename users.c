@@ -45,6 +45,11 @@ static int load_users_from_file_aux(char * filename) {
 			continue;
 		}
 
+		if (strlen(username) >=  MAX_HEADER_LEN - 3) {
+			printf("User name in user file too long, skipping...\n");
+			continue;
+		}
+
 		passwd = strtok_r(NULL, " ", &save_ptr);
 		if (passwd == NULL || passwd[0] == '\0') {
 			printf("Malformed line in user file, skipping...\n");
@@ -117,6 +122,11 @@ void list_users() {
 }
 
 static int insert_user_aux(char * users_file, char * username, char * passwd) {
+
+	// is username too long?
+	if (strlen(username) >= MAX_HEADER_LEN - 3) {
+		return(false);
+	}
 
 	// check if the username is already taken
 	user_pass_str * user = users;
