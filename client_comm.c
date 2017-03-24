@@ -15,7 +15,7 @@ void init_hints(struct addrinfo * hints_ptr) {
 }
 
 int get_connected_socket(char * server_address, unsigned short server_port) {
-
+ 
 	int fd;
 	char server_port_string[6];
 	struct addrinfo hints, * result, * addr_info;
@@ -152,8 +152,10 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 			printf("End of transmission\n");
 			read_line = false;
 			close(0);
-		} else if (result == -1)
-			errx(1, "process_server_request");
+		} else if (result == -1) {
+                  printf("Connection to server has failed.\n");
+                  exit(1);
+                }
 
 	}
 

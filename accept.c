@@ -4,6 +4,10 @@
 #include "proto.h"
 #include "users.h"
 
+// how many authentication threads are running right now
+int running_auth_threads = 0;
+pthread_mutex_t auth_mx;
+
 void accept_signal_handler(int sig) {
 
 	pthread_exit(NULL);
@@ -70,47 +74,127 @@ int get_listening_socket(unsigned short server_port) {
 
 }
 
+static void decrement_auth_count() {
+  
+  pthread_mutex_lock(&auth_mx); 
+
+  assert(running_auth_threads > 0);
+  running_auth_threads--;
+
+  pthread_mutex_unlock(&auth_mx);
+
+}
+
+static void * run_auth_thread(void * arg) {
+
+  int client_fd = * ((int*) arg);
+  free(arg);
+
+  // authentication
+  char * username = NULL;
+  if (get_message(client_fd, &username) != 0) {
+    close(client_fd);
+    decrement_auth_count();
+    return (NULL);
+  }
+  char * password = NULL;
+  if (get_message(client_fd, &password) != 0) {
+    free(username);
+    close(client_fd);
+    decrement_auth_count();
+    return (NULL);
+  }
+
+  if (!user_present(username, password)) {
+    send_message(client_fd, "Wrong username or password");
+    free(username);
+    free(password);
+    close(client_fd);
+    decrement_auth_count();
+    return (NULL);
+  }
+
+  send_message(client_fd, "Connected.");
+
+  pthread_mutex_lock(&thr_list_mx);
+
+  // send username and file descriptor
+  // of newly accepted client to the menu thread
+  send_message(thread_list->comm_fd, username);
+  send_message_f(thread_list->comm_fd, "%d", client_fd);
+
+  pthread_mutex_unlock(&thr_list_mx);
+
+  free(username);
+  free(password);
+
+  decrement_auth_count();
+  return (NULL);
+}
+
 void accept_thread_cycle(int fd) {
 
-	int client_fd;
+  pthread_t auth_thread;
+  int client_fd = accept(fd, NULL, NULL);
+  int * thr_arg = malloc(sizeof (int));
+  *thr_arg = client_fd;
 
-	client_fd = accept(fd, NULL, NULL);
+  if (running_auth_threads < MAX_AUTH_THREADS) {
+    pthread_mutex_lock(&auth_mx); 
+    running_auth_threads++;
+    pthread_mutex_unlock(&auth_mx);
+  
+    if (pthread_create(&auth_thread, NULL,
+    &run_auth_thread, (void *) thr_arg) != 0) {
+      free(thr_arg);
+    }
+    pthread_detach(auth_thread);
+  } else {
+    free(thr_arg);
+    send_message(client_fd, "Unable to connect right now.");
+    close(client_fd);
+  }  
 
-	// authentication
-	char * username = NULL;
-	if (get_message(client_fd, &username) != 0) {
-		close(client_fd);
-		return;
-	}
-	char * password = NULL;
-	if (get_message(client_fd, &password) != 0) {
-		free(username);
-		close(client_fd);
-		return;
-	}
+  /*
+  int client_fd;
+        
+  client_fd = accept(fd, NULL, NULL);
 
-	if (!user_present(username, password)) {
-		send_message(client_fd, "Wrong username or password");
-		free(username);
-		free(password);
-		close(client_fd);
-		return;
-	}
+  // authentication
+  char * username = NULL;
+  if (get_message(client_fd, &username) != 0) {
+    close(client_fd);
+    return;
+  }
+  char * password = NULL;
+  if (get_message(client_fd, &password) != 0) {
+    free(username);
+    close(client_fd);
+    return;
+  }
 
-	send_message(client_fd, "Connected.");
+  if (!user_present(username, password)) {
+    send_message(client_fd, "Wrong username or password");
+    free(username);
+    free(password);
+    close(client_fd);
+    return;
+  }
 
-        pthread_mutex_lock(&thr_list_mx);
+  send_message(client_fd, "Connected.");
 
-	// send username and file descriptor
-	// of newly accepted client to the menu thread
-	send_message(thread_list->comm_fd, username);
-	send_message_f(thread_list->comm_fd, "%d", client_fd);
+  pthread_mutex_lock(&thr_list_mx);
 
-        pthread_mutex_unlock(&thr_list_mx);
+  // send username and file descriptor
+  // of newly accepted client to the menu thread
+  send_message(thread_list->comm_fd, username);
+  send_message_f(thread_list->comm_fd, "%d", client_fd);
 
-	free(username);
-	free(password);
+  pthread_mutex_unlock(&thr_list_mx);
 
+  free(username);
+  free(password);
+  */
 }
 
 void set_signal_action() {
@@ -142,6 +226,8 @@ void * run_accept_thread(void * arg) {
 	set_signal_action();
 
 	fd = get_listening_socket(server_port);
+
+        pthread_mutex_init(&auth_mx, NULL);
 
 	while (true) {
 
