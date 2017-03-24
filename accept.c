@@ -99,11 +99,14 @@ void accept_thread_cycle(int fd) {
 
 	send_message(client_fd, "Connected.");
 
+        pthread_mutex_lock(&thr_list_mx);
+
 	// send username and file descriptor
 	// of newly accepted client to the menu thread
 	send_message(thread_list->comm_fd, username);
-
 	send_message_f(thread_list->comm_fd, "%d", client_fd);
+
+        pthread_mutex_unlock(&thr_list_mx);
 
 	free(username);
 	free(password);
