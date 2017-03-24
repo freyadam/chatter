@@ -155,46 +155,6 @@ void accept_thread_cycle(int fd) {
     close(client_fd);
   }  
 
-  /*
-  int client_fd;
-        
-  client_fd = accept(fd, NULL, NULL);
-
-  // authentication
-  char * username = NULL;
-  if (get_message(client_fd, &username) != 0) {
-    close(client_fd);
-    return;
-  }
-  char * password = NULL;
-  if (get_message(client_fd, &password) != 0) {
-    free(username);
-    close(client_fd);
-    return;
-  }
-
-  if (!user_present(username, password)) {
-    send_message(client_fd, "Wrong username or password");
-    free(username);
-    free(password);
-    close(client_fd);
-    return;
-  }
-
-  send_message(client_fd, "Connected.");
-
-  pthread_mutex_lock(&thr_list_mx);
-
-  // send username and file descriptor
-  // of newly accepted client to the menu thread
-  send_message(thread_list->comm_fd, username);
-  send_message_f(thread_list->comm_fd, "%d", client_fd);
-
-  pthread_mutex_unlock(&thr_list_mx);
-
-  free(username);
-  free(password);
-  */
 }
 
 void set_signal_action() {
