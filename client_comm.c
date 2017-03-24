@@ -130,7 +130,7 @@ void set_sigint_handler() {
 
 }
 
-void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
+void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread, char * message) {
 
 	int err_poll, result;
 	struct pollfd * fds = *fds_ptr;
@@ -146,7 +146,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 	// input from server
 	if (fds[0].revents & POLLIN) {
 
-		result = process_server_request(fds[0].fd);
+          result = process_server_request(fds[0].fd, message);
 
 		if (result == EOF_IN_STREAM) {
 			printf("End of transmission\n");
@@ -162,7 +162,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread) {
 	// input from client
 	if (fds[1].revents & POLLIN) {
 
-		result = process_client_request(fds[0].fd, fds[1].fd);
+          result = process_client_request(fds[0].fd, fds[1].fd, message);
 
 		if (result == -1)
 			errx(1, "process_client_request");
@@ -199,6 +199,8 @@ int run_client(char * server_address, int server_port,
 
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * 2);
 
+        char line[MAX_MSG_LEN+1];
+
 	// initialize pollfd for server
 	init_pollfd_record(&fds[0], server_fd);
 
@@ -207,7 +209,7 @@ int run_client(char * server_address, int server_port,
 
 	while (read_line) {
 
-		poll_cycle(&fds, get_line_thread);
+          poll_cycle(&fds, get_line_thread, line);
 
 	}
 
@@ -220,12 +222,9 @@ int run_client(char * server_address, int server_port,
 	return (0);
 }
 
-int process_server_request(int fd) {
+int process_server_request(int fd, char * message) {
 
-
-	char * message = NULL;
-
-	enum dispatch_t disp_type = get_dispatch(fd, &message);
+	enum dispatch_t disp_type = get_dispatch_no_alloc(fd, &message, MAX_MSG_LEN);
 
 	switch (disp_type) {
 	case FAILURE:
@@ -245,11 +244,9 @@ int process_server_request(int fd) {
 		return (EOF_IN_STREAM);
 	case CMD:
 		send_end(fd);
-		free(message);
 		return (-1);
 	case MSG:
 		printf("%s\n", message);
-		free(message);
 		break;
 	default:
 		assert(false);
@@ -263,42 +260,36 @@ char * cmd_argument(char * line) {
 	return (line+5);
 }
 
-int process_client_request(int server_fd, int line_fd) {
+int process_client_request(int server_fd, int line_fd, char * line) {
 
-	char * line = NULL;
-	int result = get_delim(line_fd, &line,
-	'\n', MAX_MSG_LEN - MAX_HEADER_LEN);
-	if (result == -1)
-		err(1, "get_delim");
+  int result = get_delim_no_alloc(line_fd, &line,
+    '\n', MAX_MSG_LEN - MAX_HEADER_LEN);
+  if (result == -1)
+    err(1, "get_delim");
 
-	if (line == strstr(line, "/cmd")) { // line begins with "/cmd"
+  if (line == strstr(line, "/cmd")) { // line begins with "/cmd"
 
-		if (NULL != strstr(cmd_argument(line), " ")) {
-			printf("Commands cannot contain spaces\n");
-			free(line);
-			return (0);
-		}
+    if (NULL != strstr(cmd_argument(line), " ")) {
+      printf("Commands cannot contain spaces\n");
+      return (0);
+    }
 
-		result = send_command(server_fd, cmd_argument(line));
-		free(line);
-		return (result);
+    result = send_command(server_fd, cmd_argument(line));
+    return (result);
 
-	} else if (strcmp(line, "/end") == 0) { // line begins with "/end"
+  } else if (strcmp(line, "/end") == 0) { // line begins with "/end"
 
-		free(line);
-		return (send_end(server_fd));
+    return (send_end(server_fd));
 
-	} else if (strcmp(line, "/ext") == 0) { // line begins with "/ext"
+  } else if (strcmp(line, "/ext") == 0) { // line begins with "/ext"
 
-		free(line);
-		return (send_exit(server_fd));
+    return (send_exit(server_fd));
 
-	} else { // type of the dispatch is message
+  } else { // type of the dispatch is message
 
-		result = send_message(server_fd, line);
-		free(line);
-		return (result);
+    result = send_message(server_fd, line);
+    return (result);
 
-	}
+  }
 
 }
