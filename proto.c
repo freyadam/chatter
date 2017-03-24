@@ -67,6 +67,44 @@ int get_delim(int fd, char ** line_ptr, char del, int max_len) {
 	return (position-1);	// don't include the null character
 }
 
+
+// get next delimited part of text
+// without the delimiter (which will be consumed)
+// message will be saved inside 'space' which needs to have at least size max_len 
+int get_delim_no_alloc(int fd, char ** space_ptr, char del, int max_len) {
+
+	int position, err_read;
+	position = 0;
+	char c, * space = *space_ptr;
+
+	while ((err_read = read(fd, &c, 1)) == 1) {
+
+          // current message would be writen outside allocated space
+          // not counting necessary end char
+          if (position >= max_len - 1) {
+            break;
+          }
+
+          space[position++] = c;
+          if (c == del) {
+            space[position-1] = '\0';
+            break;
+          }
+
+	}
+
+	if (err_read == -1) {
+          return (-1);
+	}
+
+	if (err_read == 0) {
+          space[++position] = '\0';
+          return (0);
+	}
+
+	return (position-1);	// don't include the null character
+}
+
 enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 	char * prefix = NULL;
@@ -194,6 +232,105 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 	return (FAILURE);
 
 }
+
+enum dispatch_t get_dispatch_no_alloc(int fd, char ** space_ptr, int max_len) {
+
+	ssize_t prefix_len;
+
+	// get prefix
+        assert(max_len >= 5);
+	prefix_len = get_delim_no_alloc(fd, space_ptr, DELIMITER, 5);
+
+	if (prefix_len == 0) {
+
+		return (EOF_STREAM);
+
+	} else if (prefix_len == -1) {
+
+		return (FAILURE);
+
+	} else if (prefix_len != 3) {
+
+		return (FAILURE);
+
+	} else if (strcmp(*space_ptr, "ERR") == 0) { // ERROR
+
+		return (ERR);
+
+	} else if (strcmp(*space_ptr, "EXT") == 0) { // EXIT
+
+		return (EXT);
+
+	} else if (strcmp(*space_ptr, "END") == 0) { // END OF TRANSMISSION
+
+		return (END);
+
+	} else if (strcmp(*space_ptr, "CMD") == 0) { // COMMAND
+
+		// get the actual command
+		int err_arg = get_delim_no_alloc(fd, space_ptr,
+    DELIMITER, max_len);
+		if (err_arg == -1) {
+			return (FAILURE);
+		} else if (err_arg == 0) {
+			return (EOF_STREAM);
+		}
+
+		return (CMD);
+
+	} else if (strcmp(*space_ptr, "MSG") == 0) { // MESSAGE
+
+		// get length of message
+
+		int err_arg = get_delim_no_alloc(fd, space_ptr, DELIMITER, 10);
+
+		if (err_arg == -1) {
+			return (FAILURE);
+		} else if (err_arg == 0) {
+			return (EOF_STREAM);
+		}
+
+		int msg_length = strtol(*space_ptr, NULL, 10);
+
+		if (msg_length == 0 && errno == EINVAL) {
+			return (FAILURE);
+		} else if (msg_length > max_len-1) {
+			return (FAILURE);
+		}
+
+		// get the actual message
+		int chars_read = 0;
+		while (chars_read != msg_length+1) {
+			err_arg = read(fd, (*space_ptr) + chars_read,
+		msg_length+1-chars_read);
+
+			if (err_arg == -1) {
+				return (FAILURE);
+			}
+
+			chars_read += err_arg;
+		}
+
+		if ((*space_ptr)[msg_length] != DELIMITER) {
+			return (FAILURE);
+		}
+
+		(*space_ptr)[msg_length] = '\0';
+
+		// message_ptr already set previously
+
+		return (MSG);
+
+	} else { // UNKNOWN PREFIX
+		return (FAILURE);
+	}
+
+	// program should never reach this part
+	assert(false);
+	return (FAILURE);
+
+}
+
 
 int get_message(int fd, char ** contents_ptr) {
 

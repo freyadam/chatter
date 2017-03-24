@@ -8,9 +8,9 @@
 static void process_comm_request(struct comm_block * room_info,
 		char * room_name);
 static void process_client_request(struct comm_block * room_info,
-		int client_no);
+                                   int client_no, char * message);
 
-void poll_cycle(struct comm_block * room_info, char * room_name) {
+void poll_cycle(struct comm_block * room_info, char * room_name, char * message) {
 
 	int client_no;
 
@@ -37,7 +37,7 @@ void poll_cycle(struct comm_block * room_info, char * room_name) {
 		if (room_info->fds[client_no].revents & POLLIN) {
 
 
-			process_client_request(room_info, client_no);
+                  process_client_request(room_info, client_no, message);
 
 		}
 
@@ -56,6 +56,8 @@ void * run_comm_thread(void * arg_struct) {
 	free(args);
 
 	end_of_thread = false;
+
+        char msg_buffer[MAX_MSG_LEN];
 
 	int fds_size = 2; // priority channel + thread communication channel
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
@@ -77,7 +79,7 @@ void * run_comm_thread(void * arg_struct) {
 
 	while (!end_of_thread) {
 
-		poll_cycle(&room_info, room_name);
+          poll_cycle(&room_info, room_name, msg_buffer);
 
 	}
 
@@ -131,15 +133,13 @@ static void process_comm_request(struct comm_block * room_info,
 
 
 static void process_client_request(struct comm_block * room_info,
-		int client_no) {
+                                   int client_no, char * message) {
 
 	int i, client_fd;
-	char * message;
 
-	message = NULL;
 	client_fd = room_info->fds[client_no].fd;
 
-	enum dispatch_t type = get_dispatch(client_fd, &message);
+	enum dispatch_t type = get_dispatch_no_alloc(client_fd, &message, MAX_MSG_LEN);
 	if (type == FAILURE) { // something went wrong
 		close(client_no);
 		errx(1, "get_dispatch");
@@ -188,10 +188,6 @@ static void process_client_request(struct comm_block * room_info,
 		default:
 			assert(false);
 		}
-
-		// release allocated resources
-		if (message != NULL)
-			free(message);
 
 	}
 

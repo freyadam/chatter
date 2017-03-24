@@ -19,7 +19,11 @@ enum dispatch_t {
 	FAILURE};
 
 int get_delim(int fd, char ** line_ptr, char del, int max_len);
+int get_delim_no_alloc(int fd, char ** space_ptr, char del, int max_len);
+
 enum dispatch_t get_dispatch(int fd, char ** message_ptr);
+enum dispatch_t get_dispatch_no_alloc(int fd, char ** space_ptr, int max_len);
+
 int get_message(int fd, char ** contents_ptr);
 
 int send_dispatch(int fd, char * dispatch);
