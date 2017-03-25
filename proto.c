@@ -377,23 +377,45 @@ int send_dispatch(int fd, char * dispatch) {
 
 int send_message(int fd, char * message) {
 
-	// dispatch: 'MSG MSG_LEN MESSAGE_ITSELF \0'
-	// computation below corresponds to elements from dispatch,
-	// summed from left to right
-	int dispatch_len = 3 + 1 + MAX_MSG_LEN_SIZE
-		+ 1 + strlen(message) + 1 + 1;
-	char * dispatch = malloc(dispatch_len);
+  // dispatch: 'MSG MSG_LEN MESSAGE_ITSELF \0'
+  // computation below corresponds to elements from dispatch,
+  // summed from left to right
+  /*
+  int dispatch_len = 3 + 1 + MAX_MSG_LEN_SIZE
+    + 1 + strlen(message) + 1 + 1;
+  char * dispatch = malloc(dispatch_len);
 
-	int result = snprintf(dispatch, dispatch_len, "MSG %d %s ",
-		(int)strlen(message), message);
-	if (result < 0 || result > dispatch_len)
-			return (-1);
+  int result = snprintf(dispatch, dispatch_len, "MSG %d %s ",
+                        (int)strlen(message), message);
+  if (result < 0 || result > dispatch_len)
+    return (-1);
 
-	result = send_dispatch(fd, dispatch);
+  result = send_dispatch(fd, dispatch);
+  
+  free(dispatch);
+  */
 
-	free(dispatch);
+  char msg_len_str[MAX_MSG_LEN_SIZE];
 
-	return (result);
+  if (send_dispatch(fd, "MSG ") == -1)
+    return (-1);
+
+  int result = snprintf(msg_len_str, MAX_MSG_LEN_SIZE, "%d ",
+                        (int)strlen(message));
+  if (result < 0 || result > MAX_MSG_LEN_SIZE)
+    return (-1);
+
+  if (send_dispatch(fd, msg_len_str) == -1)
+    return (-1);
+
+  if (send_dispatch(fd, message) == -1)
+    return (-1);
+
+  if (send_dispatch(fd, " ") == -1)
+    return (-1);
+  else 
+    return (0);
+
 }
 
 int send_message_f(int fd, char * format, ...) {
