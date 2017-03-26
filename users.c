@@ -45,8 +45,9 @@ static int load_users_from_file_aux(char * filename) {
 			continue;
 		}
 
-		if (strlen(username) >=  MAX_HEADER_LEN - 3) {
-			printf("User name in user file too long, skipping...\n");
+		if (strlen(username) >=	MAX_HEADER_LEN - 3) {
+			printf("User name in user file too long,"
+    "skipping...\n");
 			continue;
 		}
 
@@ -125,7 +126,7 @@ static int insert_user_aux(char * users_file, char * username, char * passwd) {
 
 	// is username too long?
 	if (strlen(username) >= MAX_HEADER_LEN - 3) {
-		return(false);
+		return (false);
 	}
 
 	// check if the username is already taken

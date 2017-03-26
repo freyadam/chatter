@@ -8,9 +8,10 @@
 static void process_comm_request(struct comm_block * room_info,
 		char * room_name);
 static void process_client_request(struct comm_block * room_info,
-                                   int client_no, char * message);
+    int client_no, char * message);
 
-void poll_cycle(struct comm_block * room_info, char * room_name, char * message) {
+void poll_cycle(struct comm_block * room_info, char * room_name,
+    char * message) {
 
 	int client_no;
 
@@ -37,7 +38,7 @@ void poll_cycle(struct comm_block * room_info, char * room_name, char * message)
 		if (room_info->fds[client_no].revents & POLLIN) {
 
 
-                  process_client_request(room_info, client_no, message);
+			process_client_request(room_info, client_no, message);
 
 		}
 
@@ -57,7 +58,7 @@ void * run_comm_thread(void * arg_struct) {
 
 	end_of_thread = false;
 
-        char msg_buffer[MAX_MSG_LEN];
+				char msg_buffer[MAX_MSG_LEN];
 
 	int fds_size = 2; // priority channel + thread communication channel
 	struct pollfd * fds = malloc(sizeof (struct pollfd) * fds_size);
@@ -79,7 +80,7 @@ void * run_comm_thread(void * arg_struct) {
 
 	while (!end_of_thread) {
 
-          poll_cycle(&room_info, room_name, msg_buffer);
+		poll_cycle(&room_info, room_name, msg_buffer);
 
 	}
 
@@ -133,13 +134,14 @@ static void process_comm_request(struct comm_block * room_info,
 
 
 static void process_client_request(struct comm_block * room_info,
-                                   int client_no, char * message) {
+    int client_no, char * message) {
 
 	int i, client_fd;
 
 	client_fd = room_info->fds[client_no].fd;
 
-	enum dispatch_t type = get_dispatch_no_alloc(client_fd, &message, MAX_MSG_LEN);
+	enum dispatch_t type
+   = get_dispatch_no_alloc(client_fd, &message, MAX_MSG_LEN);
 	if (type == FAILURE) { // something went wrong
 		close(client_no);
 		errx(1, "get_dispatch");
@@ -174,7 +176,7 @@ static void process_client_request(struct comm_block * room_info,
 				send_message(client_fd, "Command not found.");
 			} else {
 				perform_command(client_fd, cmd,
-    room_info->names[0]); // name of room
+		room_info->names[0]); // name of room
 			}
 			break;
 		case MSG:
@@ -227,7 +229,7 @@ int add_client(struct comm_block * room_info,
 		err(1, "realloc");
 
 	room_info->names = (char **) realloc(room_info->names,
-    sizeof (char *) * (room_info->size+1));
+		sizeof (char *) * (room_info->size+1));
 	if (room_info->names == NULL)
 		err(1, "realloc");
 

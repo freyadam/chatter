@@ -187,7 +187,7 @@ int add_client_to_menu(struct comm_block * room_info, char * username, int fd) {
 		err(1, "realloc");
 
 	room_info->names = (char **) realloc(room_info->names,
-    sizeof (char *) * (room_info->size+1));
+		sizeof (char *) * (room_info->size+1));
 	if (room_info->names == NULL)
 		err(1, "realloc");
 
@@ -226,7 +226,7 @@ static void process_comm_request(struct comm_block * room_info,
 		if (new_fd == 0 && errno == EINVAL)
 						err(1, "strtol");
 	} else {
-		errx(1, "get_dispatch  _");
+		errx(1, "get_dispatch	_");
 	}
 
 	printf("New client: %s -- %d\n", new_username, new_fd);

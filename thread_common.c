@@ -30,12 +30,12 @@ int transfer_client(int room_fd, struct comm_block * room_info, int client_no) {
 	room_info->size--;
 
 	room_info->fds = realloc(room_info->fds,
-    sizeof (struct pollfd) * room_info->size);
+		sizeof (struct pollfd) * room_info->size);
 	if (room_info->fds == NULL)
 		err(1, "realloc");
 
 	room_info->names = realloc(room_info->names,
-    sizeof (char *) * room_info->size);
+		sizeof (char *) * room_info->size);
 	if (room_info->names == NULL)
 		err(1, "realloc");
 
@@ -49,7 +49,7 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	char ** names = room_info->names;
 	int fds_size = room_info->size;
 
-	close(fds[client_no].fd);	
+	close(fds[client_no].fd);
 
 	for (i = 2; i < fds_size; i++) {
 		if (i != client_no) {
@@ -58,7 +58,7 @@ int delete_client(struct comm_block * room_info, int client_no) {
 		}
 	}
 
-        free(names[client_no]);
+				free(names[client_no]);
 
 	for (i = client_no+1; i < fds_size; i++) {
 		room_info->fds[i-1] = room_info->fds[i];
@@ -68,12 +68,12 @@ int delete_client(struct comm_block * room_info, int client_no) {
 	room_info->size--;
 
 	room_info->fds = realloc(room_info->fds,
-    sizeof (struct pollfd) * room_info->size);
+		sizeof (struct pollfd) * room_info->size);
 	if (room_info->fds == NULL)
 		err(1, "realloc");
 
 	room_info->names = realloc(room_info->names,
-    sizeof (struct pollfd) * room_info->size);
+		sizeof (struct pollfd) * room_info->size);
 	if (room_info->names == NULL)
 		err(1, "realloc");
 

@@ -70,7 +70,8 @@ int get_delim(int fd, char ** line_ptr, char del, int max_len) {
 
 // get next delimited part of text
 // without the delimiter (which will be consumed)
-// message will be saved inside 'space' which needs to have at least size max_len 
+// message will be saved inside 'space' which needs to
+// have at least size max_len
 int get_delim_no_alloc(int fd, char ** space_ptr, char del, int max_len) {
 
 	int position, err_read;
@@ -79,27 +80,27 @@ int get_delim_no_alloc(int fd, char ** space_ptr, char del, int max_len) {
 
 	while ((err_read = read(fd, &c, 1)) == 1) {
 
-          // current message would be writen outside allocated space
-          // not counting necessary end char
-          if (position >= max_len - 1) {
-            break;
-          }
+		// current message would be writen outside allocated space
+		// not counting necessary end char
+		if (position >= max_len - 1) {
+			break;
+		}
 
-          space[position++] = c;
-          if (c == del) {
-            space[position-1] = '\0';
-            break;
-          }
+		space[position++] = c;
+		if (c == del) {
+			space[position-1] = '\0';
+			break;
+		}
 
 	}
 
 	if (err_read == -1) {
-          return (-1);
+					return (-1);
 	}
 
 	if (err_read == 0) {
-          space[++position] = '\0';
-          return (0);
+					space[++position] = '\0';
+					return (0);
 	}
 
 	return (position-1);	// don't include the null character
@@ -156,7 +157,7 @@ enum dispatch_t get_dispatch(int fd, char ** message_ptr) {
 
 		// get the actual command
 		int err_arg = get_delim(fd, message_ptr,
-    DELIMITER, MAX_MSG_LEN);
+		DELIMITER, MAX_MSG_LEN);
 		if (err_arg == -1) {
 			return (FAILURE);
 		} else if (err_arg == 0) {
@@ -238,7 +239,7 @@ enum dispatch_t get_dispatch_no_alloc(int fd, char ** space_ptr, int max_len) {
 	ssize_t prefix_len;
 
 	// get prefix
-        assert(max_len >= 5);
+				assert(max_len >= 5);
 	prefix_len = get_delim_no_alloc(fd, space_ptr, DELIMITER, 5);
 
 	if (prefix_len == 0) {
@@ -269,7 +270,7 @@ enum dispatch_t get_dispatch_no_alloc(int fd, char ** space_ptr, int max_len) {
 
 		// get the actual command
 		int err_arg = get_delim_no_alloc(fd, space_ptr,
-    DELIMITER, max_len);
+		DELIMITER, max_len);
 		if (err_arg == -1) {
 			return (FAILURE);
 		} else if (err_arg == 0) {
@@ -377,44 +378,26 @@ int send_dispatch(int fd, char * dispatch) {
 
 int send_message(int fd, char * message) {
 
-  // dispatch: 'MSG MSG_LEN MESSAGE_ITSELF \0'
-  // computation below corresponds to elements from dispatch,
-  // summed from left to right
-  /*
-  int dispatch_len = 3 + 1 + MAX_MSG_LEN_SIZE
-    + 1 + strlen(message) + 1 + 1;
-  char * dispatch = malloc(dispatch_len);
+	char msg_len_str[MAX_MSG_LEN_SIZE];
 
-  int result = snprintf(dispatch, dispatch_len, "MSG %d %s ",
-                        (int)strlen(message), message);
-  if (result < 0 || result > dispatch_len)
-    return (-1);
+	if (send_dispatch(fd, "MSG ") == -1)
+		return (-1);
 
-  result = send_dispatch(fd, dispatch);
-  
-  free(dispatch);
-  */
+	int result = snprintf(msg_len_str, MAX_MSG_LEN_SIZE, "%d ",
+    (int)strlen(message));
+	if (result < 0 || result > MAX_MSG_LEN_SIZE)
+		return (-1);
 
-  char msg_len_str[MAX_MSG_LEN_SIZE];
+	if (send_dispatch(fd, msg_len_str) == -1)
+		return (-1);
 
-  if (send_dispatch(fd, "MSG ") == -1)
-    return (-1);
+	if (send_dispatch(fd, message) == -1)
+		return (-1);
 
-  int result = snprintf(msg_len_str, MAX_MSG_LEN_SIZE, "%d ",
-                        (int)strlen(message));
-  if (result < 0 || result > MAX_MSG_LEN_SIZE)
-    return (-1);
-
-  if (send_dispatch(fd, msg_len_str) == -1)
-    return (-1);
-
-  if (send_dispatch(fd, message) == -1)
-    return (-1);
-
-  if (send_dispatch(fd, " ") == -1)
-    return (-1);
-  else 
-    return (0);
+	if (send_dispatch(fd, " ") == -1)
+		return (-1);
+	else
+		return (0);
 
 }
 
