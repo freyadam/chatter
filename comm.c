@@ -11,7 +11,7 @@ static void process_client_request(struct comm_block * room_info,
     int client_no, char * message);
 
 void poll_cycle(struct comm_block * room_info, char * room_name,
-    char * message) {
+    char * storage) {
 
 	int client_no;
 
@@ -38,7 +38,7 @@ void poll_cycle(struct comm_block * room_info, char * room_name,
 		if (room_info->fds[client_no].revents & POLLIN) {
 
 
-			process_client_request(room_info, client_no, message);
+			process_client_request(room_info, client_no, storage);
 
 		}
 

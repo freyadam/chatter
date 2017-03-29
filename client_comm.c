@@ -131,7 +131,7 @@ void set_sigint_handler() {
 }
 
 void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread,
-   char * message) {
+   char * storage) {
 
 	int err_poll, result;
 	struct pollfd * fds = *fds_ptr;
@@ -147,7 +147,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread,
 	// input from server
 	if (fds[0].revents & POLLIN) {
 
-		result = process_server_request(fds[0].fd, message);
+		result = process_server_request(fds[0].fd, storage);
 
 		if (result == EOF_IN_STREAM) {
 			printf("End of transmission\n");
@@ -163,7 +163,7 @@ void poll_cycle(struct pollfd ** fds_ptr, pthread_t line_thread,
 	// input from client
 	if (fds[1].revents & POLLIN) {
 
-		result = process_client_request(fds[0].fd, fds[1].fd, message);
+		result = process_client_request(fds[0].fd, fds[1].fd, storage);
 
 		if (result == -1)
 			errx(1, "process_client_request");
